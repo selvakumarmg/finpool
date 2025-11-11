@@ -1,50 +1,225 @@
-# Welcome to your Expo app 👋
+# FinPool - Financial Management App
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A comprehensive financial management mobile application built with React Native and Expo, featuring transaction tracking, loan management, and notifications.
 
-## Get started
+## Features
 
-1. Install dependencies
+- 💰 **Transaction Management**: Track income and expenses with detailed categorization
+- 🏦 **Loan Tracking**: Manage loans with EMI calculations and payment schedules
+- 🔔 **Notifications**: Stay updated with transaction and loan notifications
+- 📊 **Analytics**: View spending insights and financial summaries
+- 👤 **User Profile**: Manage account settings and preferences
+- 🌙 **Beautiful UI**: Modern purple gradient theme with smooth animations
 
-   ```bash
-   npm install
-   ```
+## Tech Stack
 
-2. Start the app
+- **React Native** with Expo
+- **TypeScript** for type safety
+- **Expo Router** for file-based navigation
+- **Redux Toolkit** for state management
+- **Redux Persist** for data persistence
+- **Lucide Icons** for consistent iconography
+- **Expo Linear Gradient** for beautiful backgrounds
 
-   ```bash
-   npx expo start
-   ```
+## Prerequisites
 
-In the output, you'll find options to open the app in a
+- Node.js (v18 or higher)
+- npm or yarn
+- Expo CLI
+- EAS CLI (for building)
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+## Installation
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
-
+1. Clone the repository
 ```bash
-npm run reset-project
+git clone <repository-url>
+cd finpool
 ```
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
+2. Install dependencies
+```bash
+npm install
+```
 
-## Learn more
+3. Start the development server
+```bash
+npx expo start
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+## Building the App
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+### Install EAS CLI
+```bash
+npm install -g eas-cli
+```
 
-## Join the community
+### Login to Expo
+```bash
+eas login
+```
 
-Join our community of developers creating universal apps.
+### Configure EAS Build (Already done)
+The project includes `eas.json` with build configurations.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+### Build for Development
+```bash
+# Android APK (Development)
+eas build --profile development --platform android
+
+# iOS Development
+eas build --profile development --platform ios
+```
+
+### Build for Preview/Testing
+```bash
+# Android APK (Preview)
+eas build --profile preview --platform android
+
+# iOS Preview
+eas build --profile preview --platform ios
+```
+
+### Build for Production
+```bash
+# Android AAB (Play Store)
+eas build --profile production --platform android
+
+# iOS (App Store)
+eas build --profile production --platform ios
+```
+
+### Build for Both Platforms
+```bash
+eas build --profile production --platform all
+```
+
+## Project Structure
+
+```
+finpool/
+├── app/                    # App screens and navigation
+│   ├── (tabs)/            # Tab-based screens
+│   │   ├── index.tsx      # Home/Dashboard
+│   │   ├── loans.tsx      # Loans management
+│   │   ├── addLoan.tsx    # Add new loan
+│   │   ├── addTransaction.tsx  # Add transaction
+│   │   ├── notifications.tsx   # Notifications
+│   │   ├── reminder.tsx   # Activity/Reminders
+│   │   ├── profile.tsx    # User profile
+│   │   └── _layout.tsx    # Tabs layout
+│   ├── auth/              # Authentication screens
+│   │   └── login.tsx      # Login screen
+│   └── _layout.tsx        # Root layout
+├── store/                 # Redux store
+│   ├── slices/           # Redux slices
+│   │   ├── authSlice.ts
+│   │   ├── transactionSlice.ts
+│   │   ├── loanSlice.ts
+│   │   └── notificationSlice.ts
+│   ├── hooks.ts          # Redux hooks
+│   └── index.ts          # Store configuration
+├── assets/               # Images and fonts
+├── eas.json             # EAS build configuration
+├── app.json             # Expo configuration
+└── package.json         # Dependencies
+
+```
+
+## Environment Setup
+
+Before submitting to app stores, update the following in `eas.json`:
+
+### For iOS:
+- `appleId`: Your Apple ID email
+- `ascAppId`: App Store Connect App ID
+- `appleTeamId`: Your Apple Developer Team ID
+
+### For Android:
+- Create a service account in Google Play Console
+- Download the JSON key file
+- Update `serviceAccountKeyPath` in `eas.json`
+
+## App Configuration
+
+Update `app.json` for your app details:
+- `name`: Display name
+- `slug`: URL-friendly identifier
+- `version`: App version
+- `icon`: App icon path
+- `ios.bundleIdentifier`: iOS bundle ID
+- `android.package`: Android package name
+
+## Scripts
+
+```bash
+# Start development server
+npm start
+
+# Start with cache clear
+npm run start:clear
+
+# Run on Android
+npm run android
+
+# Run on iOS
+npm run ios
+
+# Run on web
+npm run web
+
+# Type checking
+npm run typecheck
+
+# Build locally (for testing)
+npx expo run:android
+npx expo run:ios
+```
+
+## Features Details
+
+### Authentication
+- Mock login system with Redux state management
+- Persistent authentication state
+- Auto-redirect based on auth status
+
+### Transactions
+- Add income/expense transactions
+- Categorize transactions
+- View transaction history
+- Real-time balance calculation
+- INR currency support
+
+### Loans
+- Add loans with interest calculation
+- Automatic EMI computation
+- EMI payment schedule
+- Progress tracking
+- Multiple loan types support
+
+### Notifications
+- Transaction notifications
+- Loan payment reminders
+- Read/unread status
+- Mark all as read functionality
+
+## Contributing
+
+1. Fork the repository
+2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
+
+## License
+
+This project is licensed under the MIT License.
+
+## Support
+
+For support, email support@finpool.app or open an issue in the repository.
+
+## Acknowledgments
+
+- Expo team for the amazing framework
+- Redux team for state management
+- Lucide for beautiful icons
