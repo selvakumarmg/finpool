@@ -5,7 +5,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { Href, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import React from 'react';
-import { Dimensions, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
@@ -17,8 +17,8 @@ const Login = () => {
   const handleGetStarted = () => {
     // Dispatch mock login action
     dispatch(mockLogin());
-    // Navigate to tabs
-    router.replace('/(tabs)/' as Href);
+        // Navigate to tabs
+        router.replace('/(tabs)/' as Href);
   };
 
   return (
@@ -36,7 +36,7 @@ const Login = () => {
           <View style={styles.logoSection}>
             <View style={styles.logoIcon}>
               <View style={styles.logoCircle}>
-                <View style={styles.logoInnerCircle} />
+                <Image source={require('@/assets/images/piggy-bank.png')} style={styles.logoImage} />
               </View>
             </View>
             <Text style={styles.brandName}>Finpool Jar</Text>
@@ -93,14 +93,21 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   logoCircle: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    borderRadius: 100,
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.3)',
+  },
+  logoImage:{
+    width: 32,
+    height: 32,
+    tintColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 10,
+    justifyContent: 'center',
+    alignItems: 'center',
+    margin: 10
   },
   logoInnerCircle: {
     width: 20,
@@ -147,6 +154,9 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 8,
   },
+  getStartedButtonDisabled: {
+    opacity: 0.6,
+  },
   getStartedContent: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -158,6 +168,7 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 0.5,
   },
+ 
 });
 
 export default Login;
