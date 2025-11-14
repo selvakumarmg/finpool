@@ -1,35 +1,44 @@
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Alert } from 'react-native';
-import React, { useState, useEffect } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, ScrollView, Alert, Modal } from 'react-native';
+import React, { useState, useEffect, useMemo } from 'react';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { ChevronLeft, DollarSign } from 'lucide-react-native';
-import { useAppDispatch } from '@/store/hooks';
+import { ChevronLeft, DollarSign, Check, PlusCircle, X } from 'lucide-react-native';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { addLoan, Loan, EMI } from '@/store/slices/loanSlice';
 import { addNotification } from '@/store/slices/notificationSlice';
+import { addLoanType, defaultLoanTypes } from '@/store/slices/settingsSlice';
+import { useTranslation } from '@/locale/LocaleProvider';
+import StatusModal from '@/components/ui/StatusModal';
 
 const AddLoan = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const t = useTranslation();
+  const loanTypesFromStore = useAppSelector((state) => state.settings.loanTypes);
+  const loanTypes = loanTypesFromStore && loanTypesFromStore.length > 0 ? loanTypesFromStore : defaultLoanTypes;
   
   const [lenderName, setLenderName] = useState('');
   const [loanType, setLoanType] = useState('');
   const [principalAmount, setPrincipalAmount] = useState('');
   const [interestRate, setInterestRate] = useState('');
   const [tenureMonths, setTenureMonths] = useState('');
-  const [startDate, setStartDate] = useState(new Date().toISOString().split('T')[0]);
+  const getToday = () => new Date().toISOString().split('T')[0];
+
+  const [startDate, setStartDate] = useState(getToday());
   const [description, setDescription] = useState('');
   const [calculatedEMI, setCalculatedEMI] = useState<number>(0);
-
-  const loanTypes = ['Personal', 'Home', 'Car', 'Education', 'Business', 'Other'];
+  const [isLoanTypeModalVisible, setIsLoanTypeModalVisible] = useState(false);
+  const [newLoanType, setNewLoanType] = useState('');
+  const [statusModalVisible, setStatusModalVisible] = useState(false);
 
   // Calculate EMI when values change
   useEffect(() => {
     if (principalAmount && interestRate && tenureMonths) {
       const P = parseFloat(principalAmount);
       const r = parseFloat(interestRate) / (12 * 100); // Monthly interest rate
-      const n = parseInt(tenureMonths);
+      const n = parseFloat(tenureMonths);
       
       if (P > 0 && r >= 0 && n > 0) {
         let emi: number;
@@ -51,34 +60,67 @@ const AddLoan = () => {
     }
   }, [principalAmount, interestRate, tenureMonths]);
 
+  useEffect(() => {
+    if (!loanType && loanTypes.length > 0) {
+      setLoanType(loanTypes[0]);
+    }
+  }, [loanTypes, loanType]);
+
+  const isFormValid = useMemo(() => {
+    const principal = parseFloat(principalAmount);
+    const rate = parseFloat(interestRate);
+    const tenure = parseFloat(tenureMonths);
+    return (
+      lenderName.trim().length > 0 &&
+      !!loanType &&
+      Number.isFinite(principal) &&
+      principal > 0 &&
+      Number.isFinite(rate) &&
+      rate >= 0 &&
+      Number.isFinite(tenure) &&
+      tenure > 0
+    );
+  }, [lenderName, loanType, principalAmount, interestRate, tenureMonths]);
+
+  const resetForm = () => {
+    setLenderName('');
+    setLoanType(loanTypes[0] ?? '');
+    setPrincipalAmount('');
+    setInterestRate('');
+    setTenureMonths('');
+    setStartDate(getToday());
+    setDescription('');
+    setCalculatedEMI(0);
+  };
+
   const handleAddLoan = () => {
     if (!lenderName.trim()) {
-      Alert.alert('Error', 'Please enter lender name');
+      Alert.alert(t('loans.addTitle'), t('loans.validation.lenderRequired'));
       return;
     }
 
     if (!loanType) {
-      Alert.alert('Error', 'Please select loan type');
+      Alert.alert(t('loans.addTitle'), t('loans.validation.typeRequired'));
       return;
     }
 
     if (!principalAmount || parseFloat(principalAmount) <= 0) {
-      Alert.alert('Error', 'Please enter a valid loan amount');
+      Alert.alert(t('loans.addTitle'), t('loans.validation.amountRequired'));
       return;
     }
 
     if (!interestRate || parseFloat(interestRate) < 0) {
-      Alert.alert('Error', 'Please enter a valid interest rate');
+      Alert.alert(t('loans.addTitle'), t('loans.validation.rateRequired'));
       return;
     }
 
-    if (!tenureMonths || parseInt(tenureMonths) <= 0) {
-      Alert.alert('Error', 'Please enter a valid tenure');
+    if (!tenureMonths || parseFloat(tenureMonths) <= 0) {
+      Alert.alert(t('loans.addTitle'), t('loans.validation.tenureRequired'));
       return;
     }
 
     const principal = parseFloat(principalAmount);
-    const tenure = parseInt(tenureMonths);
+    const tenure = Math.max(1, Math.round(parseFloat(tenureMonths)));
     const totalAmount = calculatedEMI * tenure;
 
     // Generate EMI schedule
@@ -127,12 +169,16 @@ const AddLoan = () => {
     // Add notification
     const notification = {
       id: Date.now().toString(),
-      title: 'Loan Added',
-      message: `${loanType} loan from ${lenderName} - ₹${principal.toLocaleString('en-IN')} added`,
+      title: t('loans.notificationTitle'),
+      message: t('loans.notificationMessage', {
+        type: loanType,
+        lender: lenderName.trim(),
+        amount: principal.toLocaleString('en-IN'),
+      }),
       type: 'success' as const,
       read: false,
       timestamp: Date.now(),
-      date: new Date().toLocaleDateString('en-IN', { 
+      date: new Date().toLocaleString('en-IN', { 
         day: '2-digit', 
         month: 'short', 
         hour: '2-digit',
@@ -142,16 +188,9 @@ const AddLoan = () => {
 
     dispatch(addNotification(notification));
 
-    Alert.alert(
-      'Success', 
-      'Loan added successfully!',
-      [
-        {
-          text: 'OK',
-          onPress: () => router.back()
-        }
-      ]
-    );
+    resetForm();
+
+    setStatusModalVisible(true);
   };
 
   return (
@@ -164,7 +203,6 @@ const AddLoan = () => {
         style={styles.gradient}
       >
         <SafeAreaView style={styles.safeArea} edges={['top']}>
-          {/* Header */}
           <View style={styles.header}>
             <TouchableOpacity 
               style={styles.backButton}
@@ -172,8 +210,15 @@ const AddLoan = () => {
             >
               <ChevronLeft size={24} color="#FFFFFF" />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>Add Loan</Text>
-            <View style={{ width: 40 }} />
+            <Text style={styles.headerTitle}>{t('loans.addTitle')}</Text>
+            <TouchableOpacity
+              style={[styles.submitButton, !isFormValid && styles.submitButtonDisabled]}
+              onPress={handleAddLoan}
+              disabled={!isFormValid}
+              activeOpacity={0.8}
+            >
+              <Check size={20} color="#FFFFFF" />
+            </TouchableOpacity>
           </View>
 
           <ScrollView 
@@ -181,21 +226,19 @@ const AddLoan = () => {
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
           >
-            {/* Lender Name */}
             <View style={styles.inputSection}>
-              <Text style={styles.label}>Lender Name</Text>
+              <Text style={styles.label}>{t('loans.lenderName')}</Text>
               <TextInput
                 style={styles.input}
-                placeholder="e.g., HDFC Bank, ABC Finance"
+                placeholder={t('loans.lenderPlaceholder')}
                 placeholderTextColor="rgba(255, 255, 255, 0.3)"
                 value={lenderName}
                 onChangeText={setLenderName}
               />
             </View>
 
-            {/* Loan Type */}
             <View style={styles.inputSection}>
-              <Text style={styles.label}>Loan Type</Text>
+              <Text style={styles.label}>{t('loans.loanType')}</Text>
               <View style={styles.loanTypesGrid}>
                 {loanTypes.map((type) => (
                   <TouchableOpacity
@@ -214,48 +257,62 @@ const AddLoan = () => {
                     </Text>
                   </TouchableOpacity>
                 ))}
+                <TouchableOpacity
+                  style={[styles.typeChip, styles.typeChipAdd]}
+                  onPress={() => {
+                    setNewLoanType('');
+                    setIsLoanTypeModalVisible(true);
+                  }}
+                  activeOpacity={0.8}
+                >
+                  <PlusCircle size={18} color="#7C3AED" />
+                </TouchableOpacity>
               </View>
             </View>
 
-            {/* Principal Amount */}
             <View style={styles.inputSection}>
-              <Text style={styles.label}>Loan Amount</Text>
+              <Text style={styles.label}>{t('loans.loanAmount')}</Text>
               <View style={styles.amountInputContainer}>
                 <Text style={styles.currencySymbol}>₹</Text>
                 <TextInput
                   style={styles.amountInput}
                   placeholder="0"
                   placeholderTextColor="rgba(255, 255, 255, 0.3)"
-                  keyboardType="numeric"
+                  keyboardType="decimal-pad"
                   value={principalAmount}
-                  onChangeText={setPrincipalAmount}
+                  onChangeText={(text) =>
+                    setPrincipalAmount(text.replace(/[^0-9.]/g, ''))
+                  }
                 />
               </View>
             </View>
 
-            {/* Interest Rate and Tenure */}
             <View style={styles.rowInputs}>
               <View style={[styles.inputSection, { flex: 1, marginRight: 8 }]}>
-                <Text style={styles.label}>Interest Rate (%)</Text>
+                <Text style={styles.label}>{t('loans.interestRate')}</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="0"
                   placeholderTextColor="rgba(255, 255, 255, 0.3)"
-                  keyboardType="numeric"
+                  keyboardType="decimal-pad"
                   value={interestRate}
-                  onChangeText={setInterestRate}
+                  onChangeText={(text) =>
+                    setInterestRate(text.replace(/[^0-9.]/g, ''))
+                  }
                 />
               </View>
 
               <View style={[styles.inputSection, { flex: 1, marginLeft: 8 }]}>
-                <Text style={styles.label}>Tenure (Months)</Text>
+                <Text style={styles.label}>{t('loans.tenureMonths')}</Text>
                 <TextInput
                   style={styles.input}
                   placeholder="0"
                   placeholderTextColor="rgba(255, 255, 255, 0.3)"
-                  keyboardType="numeric"
+                  keyboardType="decimal-pad"
                   value={tenureMonths}
-                  onChangeText={setTenureMonths}
+                  onChangeText={(text) =>
+                    setTenureMonths(text.replace(/[^0-9.]/g, ''))
+                  }
                 />
               </View>
             </View>
@@ -267,13 +324,13 @@ const AddLoan = () => {
                   <DollarSign size={24} color="#10B981" />
                 </View>
                 <View style={styles.emiDetails}>
-                  <Text style={styles.emiLabel}>Monthly EMI</Text>
+                  <Text style={styles.emiLabel}>{t('loans.emiLabel')}</Text>
                   <Text style={styles.emiAmount}>
                     ₹{calculatedEMI.toLocaleString('en-IN')}
                   </Text>
                 </View>
                 <View style={styles.totalDetails}>
-                  <Text style={styles.totalLabel}>Total Payment</Text>
+                  <Text style={styles.totalLabel}>{t('loans.totalPayment')}</Text>
                   <Text style={styles.totalAmount}>
                     ₹{(calculatedEMI * parseInt(tenureMonths || '0')).toLocaleString('en-IN')}
                   </Text>
@@ -281,12 +338,11 @@ const AddLoan = () => {
               </View>
             )}
 
-            {/* Description */}
             <View style={styles.inputSection}>
-              <Text style={styles.label}>Description (Optional)</Text>
+              <Text style={styles.label}>{t('loans.description')}</Text>
               <TextInput
                 style={styles.descriptionInput}
-                placeholder="Add notes about this loan..."
+                placeholder={t('loans.descriptionPlaceholder')}
                 placeholderTextColor="rgba(255, 255, 255, 0.3)"
                 value={description}
                 onChangeText={setDescription}
@@ -294,20 +350,67 @@ const AddLoan = () => {
                 numberOfLines={3}
               />
             </View>
-
-            {/* Add Button */}
-            <TouchableOpacity
-              style={styles.addButton}
-              onPress={handleAddLoan}
-            >
-              <Text style={styles.addButtonText}>Add Loan</Text>
-            </TouchableOpacity>
-
             {/* Bottom Padding */}
             <View style={{ height: 20 }} />
           </ScrollView>
         </SafeAreaView>
       </LinearGradient>
+
+      <Modal
+        transparent
+        visible={isLoanTypeModalVisible}
+        animationType="fade"
+        onRequestClose={() => setIsLoanTypeModalVisible(false)}
+      >
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalContent}>
+            <View style={styles.modalHeader}>
+              <Text style={styles.modalTitle}>{t('loans.addLoanType')}</Text>
+              <TouchableOpacity
+                style={styles.modalClose}
+                onPress={() => setIsLoanTypeModalVisible(false)}
+                activeOpacity={0.7}
+              >
+                <X size={18} color="#FFFFFF" />
+              </TouchableOpacity>
+            </View>
+            <TextInput
+              style={styles.modalInput}
+              placeholder={t('loans.addLoanType')}
+              placeholderTextColor="rgba(255,255,255,0.5)"
+              value={newLoanType}
+              onChangeText={setNewLoanType}
+            />
+            <TouchableOpacity
+              style={styles.modalButton}
+              onPress={() => {
+                const normalized = newLoanType.trim();
+                if (!normalized) {
+                  Alert.alert(t('loans.addLoanType'), t('loans.validation.typeRequired'));
+                  return;
+                }
+                dispatch(addLoanType(normalized));
+                setLoanType(normalized);
+                setNewLoanType('');
+                setIsLoanTypeModalVisible(false);
+              }}
+              activeOpacity={0.85}
+            >
+              <Text style={styles.modalButtonText}>{t('common.save')}</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+
+      <StatusModal
+        visible={statusModalVisible}
+        type="created"
+        message={t('loans.success')}
+        onClose={() => {
+          setStatusModalVisible(false);
+          router.back();
+        }}
+      />
     </View>
   );
 };
@@ -344,6 +447,19 @@ const styles = StyleSheet.create({
     fontSize: 20,
     fontWeight: '700',
     color: '#FFFFFF',
+    flex: 1,
+    textAlign: 'center',
+  },
+  submitButton: {
+    width: 40,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: '#10B981',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  submitButtonDisabled: {
+    backgroundColor: 'rgba(255,255,255,0.15)',
   },
   scrollView: {
     flex: 1,
@@ -394,6 +510,17 @@ const styles = StyleSheet.create({
   },
   typeChipTextActive: {
     color: '#FFFFFF',
+  },
+  typeChipAdd: {
+    width: 56,
+    height: 48,
+    paddingHorizontal: 0,
+    paddingVertical: 0,
+    justifyContent: 'center',
+    alignItems: 'center',
+    borderStyle: 'dashed',
+    borderColor: 'rgba(124, 58, 237, 0.5)',
+    backgroundColor: 'rgba(124, 58, 237, 0.12)',
   },
   amountInputContainer: {
     flexDirection: 'row',
@@ -477,19 +604,59 @@ const styles = StyleSheet.create({
     minHeight: 100,
     textAlignVertical: 'top',
   },
-  addButton: {
-    backgroundColor: '#7C3AED',
-    paddingVertical: 18,
-    borderRadius: 16,
+  modalOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    justifyContent: 'center',
     alignItems: 'center',
-    shadowColor: '#7C3AED',
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
+    paddingHorizontal: 24,
   },
-  addButtonText: {
+  modalContent: {
+    width: '100%',
+    backgroundColor: '#1F1B2E',
+    borderRadius: 20,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(124, 58, 237, 0.4)',
+  },
+  modalHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 16,
+  },
+  modalTitle: {
     fontSize: 18,
+    fontWeight: '700',
+    color: '#FFFFFF',
+  },
+  modalClose: {
+    width: 32,
+    height: 32,
+    borderRadius: 12,
+    backgroundColor: 'rgba(255,255,255,0.1)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  modalInput: {
+    backgroundColor: 'rgba(255,255,255,0.08)',
+    borderRadius: 14,
+    paddingHorizontal: 16,
+    paddingVertical: 12,
+    fontSize: 16,
+    color: '#FFFFFF',
+    marginBottom: 20,
+    borderWidth: 1,
+    borderColor: 'rgba(255,255,255,0.12)',
+  },
+  modalButton: {
+    backgroundColor: '#7C3AED',
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  modalButtonText: {
+    fontSize: 16,
     fontWeight: '700',
     color: '#FFFFFF',
   },

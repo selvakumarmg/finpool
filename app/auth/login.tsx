@@ -1,3 +1,4 @@
+import GoogleIcon from '@/assets/icons/GoogleIcon';
 import { useAppDispatch } from '@/store/hooks';
 import { mockLogin } from '@/store/slices/authSlice';
 import { LinearGradient } from 'expo-linear-gradient';
@@ -38,15 +39,15 @@ const Login = () => {
                 <View style={styles.logoInnerCircle} />
               </View>
             </View>
-            <Text style={styles.brandName}>Track app</Text>
+            <Text style={styles.brandName}>Finpool Jar</Text>
           </View>
 
           {/* Main Content */}
           <View style={styles.mainContent}>
             <Text style={styles.welcomeText}>Welcome,</Text>
             <Text style={styles.mainTitle}>Track your all</Text>
-            <Text style={styles.mainTitle}>Subscription</Text>
-            <Text style={styles.mainTitle}>plan with Us</Text>
+            <Text style={styles.mainTitle}>Expenses & Jar</Text>
+            <Text style={styles.mainTitle}>with Us</Text>
           </View>
 
           {/* Spacer */}
@@ -59,7 +60,10 @@ const Login = () => {
               onPress={handleGetStarted}
               activeOpacity={0.8}
             >
-              <Text style={styles.getStartedText}>Get started</Text>
+              <View style={styles.getStartedContent}>
+                <GoogleIcon width={22} height={22} />
+                <Text style={styles.getStartedText}>Continue with Google</Text>
+              </View>
             </TouchableOpacity>
           </View>
         </View>
@@ -142,6 +146,11 @@ const styles = StyleSheet.create({
     shadowOpacity: 0.4,
     shadowRadius: 16,
     elevation: 8,
+  },
+  getStartedContent: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
   },
   getStartedText: {
     color: '#FFFFFF',

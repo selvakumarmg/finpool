@@ -104,7 +104,7 @@ finpool/
 │   │   ├── addLoan.tsx    # Add new loan
 │   │   ├── addTransaction.tsx  # Add transaction
 │   │   ├── notifications.tsx   # Notifications
-│   │   ├── reminder.tsx   # Activity/Reminders
+│   │   ├── activities.tsx   # Activities hub
 │   │   ├── profile.tsx    # User profile
 │   │   └── _layout.tsx    # Tabs layout
 │   ├── auth/              # Authentication screens

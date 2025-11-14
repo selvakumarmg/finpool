@@ -8,6 +8,7 @@ export interface Transaction {
   description: string;
   date: string;
   timestamp: number;
+  paymentMode?: 'cash' | 'account' | 'card' | 'upi';
 }
 
 interface TransactionState {

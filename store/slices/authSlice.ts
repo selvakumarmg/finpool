@@ -5,6 +5,9 @@ interface User {
   email: string;
   name: string;
   avatar?: string;
+  phone?: string;
+  gender?: 'male' | 'female' | 'other' | 'prefer_not_to_say';
+  dob?: string;
 }
 
 interface AuthState {
@@ -55,9 +58,17 @@ const authSlice = createSlice({
       state.isAuthenticated = true;
       state.user = mockUser;
     },
+    updateProfile: (state, action: PayloadAction<Partial<User>>) => {
+      if (state.user) {
+        state.user = {
+          ...state.user,
+          ...action.payload,
+        };
+      }
+    },
   },
 });
 
-export const { loginStart, loginSuccess, loginFailure, logout, mockLogin } = authSlice.actions;
+export const { loginStart, loginSuccess, loginFailure, logout, mockLogin, updateProfile } = authSlice.actions;
 export default authSlice.reducer;
 

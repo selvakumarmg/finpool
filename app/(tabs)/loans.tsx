@@ -5,9 +5,11 @@ import { StatusBar } from 'expo-status-bar';
 import { LinearGradient } from 'expo-linear-gradient';
 import { FileText, Calendar, DollarSign, TrendingDown, CheckCircle } from 'lucide-react-native';
 import { useAppSelector } from '@/store/hooks';
+import { useTranslation } from '@/locale/LocaleProvider';
 
 const Loans = () => {
   const { loans, totalLoanAmount, totalRemainingAmount } = useAppSelector((state) => state.loans);
+  const t = useTranslation();
 
   return (
     <View style={styles.container}>
@@ -27,8 +29,8 @@ const Loans = () => {
             {/* Header */}
             <View style={styles.header}>
               <View>
-                <Text style={styles.headerTitle}>Loans</Text>
-                <Text style={styles.headerSubtitle}>Manage your loans and debts</Text>
+                <Text style={styles.headerTitle}>{t('loansScreen.title')}</Text>
+                <Text style={styles.headerSubtitle}>{t('loansScreen.subtitle')}</Text>
               </View>
             </View>
 
@@ -38,9 +40,9 @@ const Loans = () => {
                 <View style={styles.emptyIconContainer}>
                   <FileText size={48} color="rgba(255, 255, 255, 0.3)" />
                 </View>
-                <Text style={styles.emptyStateTitle}>No Loans Yet</Text>
+                <Text style={styles.emptyStateTitle}>{t('loansScreen.emptyTitle')}</Text>
                 <Text style={styles.emptyStateDescription}>
-                  Track your loans and EMIs in one place
+                  {t('loansScreen.emptyDescription')}
                 </Text>
               </View>
             ) : (
@@ -48,13 +50,13 @@ const Loans = () => {
                 {/* Summary Cards */}
                 <View style={styles.summaryContainer}>
                   <View style={styles.summaryCard}>
-                    <Text style={styles.summaryLabel}>Total Loan</Text>
+                    <Text style={styles.summaryLabel}>{t('loansScreen.totalLoan')}</Text>
                     <Text style={styles.summaryAmount}>
                       ₹{totalLoanAmount.toLocaleString('en-IN')}
                     </Text>
                   </View>
                   <View style={styles.summaryCard}>
-                    <Text style={styles.summaryLabel}>Remaining</Text>
+                    <Text style={styles.summaryLabel}>{t('loansScreen.remaining')}</Text>
                     <Text style={[styles.summaryAmount, { color: '#EF4444' }]}>
                       ₹{totalRemainingAmount.toLocaleString('en-IN')}
                     </Text>
@@ -63,12 +65,20 @@ const Loans = () => {
 
                 {/* Loans List */}
                 <View style={styles.section}>
-                  <Text style={styles.sectionTitle}>Your Loans</Text>
+                  <Text style={styles.sectionTitle}>{t('loansScreen.sectionTitle')}</Text>
                   
                   <View style={styles.loansList}>
                     {loans.map((loan) => {
-                      const progressPercentage = ((loan.paidAmount / (loan.paidAmount + loan.remainingAmount)) * 100);
+                      const progressPercentage = (loan.paidAmount + loan.remainingAmount) === 0
+                        ? 0
+                        : (loan.paidAmount / (loan.paidAmount + loan.remainingAmount)) * 100;
                       const nextEMI = loan.emis.find(emi => !emi.isPaid);
+                      const statusLabel =
+                        loan.status === 'completed'
+                          ? t('loansScreen.status.completed')
+                          : loan.status === 'overdue'
+                          ? t('loansScreen.status.overdue')
+                          : t('loansScreen.status.active');
                       
                       return (
                         <View key={loan.id} style={styles.loanCard}>
@@ -89,7 +99,7 @@ const Loans = () => {
                               </View>
                               <View style={styles.loanInfo}>
                                 <Text style={styles.loanName}>{loan.lenderName}</Text>
-                                <Text style={styles.loanType}>{loan.loanType} Loan</Text>
+                                <Text style={styles.loanType}>{t('loansScreen.loanTypeSuffix', { type: loan.loanType })}</Text>
                               </View>
                             </View>
                             <View style={[
@@ -110,7 +120,7 @@ const Loans = () => {
                                   : '#F59E0B' 
                                 }
                               ]}>
-                                {loan.status.charAt(0).toUpperCase() + loan.status.slice(1)}
+                                {statusLabel}
                               </Text>
                             </View>
                           </View>
@@ -126,7 +136,7 @@ const Loans = () => {
                               />
                             </View>
                             <Text style={styles.progressText}>
-                              {progressPercentage.toFixed(0)}% paid
+                              {t('loansScreen.progress', { percent: progressPercentage.toFixed(0) })}
                             </Text>
                           </View>
 
@@ -134,18 +144,18 @@ const Loans = () => {
                           <View style={styles.loanDetails}>
                             <View style={styles.detailItem}>
                               <DollarSign size={16} color="rgba(255, 255, 255, 0.5)" />
-                              <Text style={styles.detailLabel}>EMI Amount</Text>
+                              <Text style={styles.detailLabel}>{t('loansScreen.detailEmi')}</Text>
                               <Text style={styles.detailValue}>₹{loan.emiAmount.toLocaleString('en-IN')}</Text>
                             </View>
                             <View style={styles.detailItem}>
                               <TrendingDown size={16} color="rgba(255, 255, 255, 0.5)" />
-                              <Text style={styles.detailLabel}>Remaining</Text>
+                              <Text style={styles.detailLabel}>{t('loansScreen.detailRemaining')}</Text>
                               <Text style={styles.detailValue}>₹{loan.remainingAmount.toLocaleString('en-IN')}</Text>
                             </View>
                             {nextEMI && (
                               <View style={styles.detailItem}>
                                 <Calendar size={16} color="rgba(255, 255, 255, 0.5)" />
-                                <Text style={styles.detailLabel}>Next Due</Text>
+                                <Text style={styles.detailLabel}>{t('loansScreen.detailNextDue')}</Text>
                                 <Text style={styles.detailValue}>{nextEMI.dueDate}</Text>
                               </View>
                             )}
@@ -154,7 +164,10 @@ const Loans = () => {
                           {/* EMI Count */}
                           <View style={styles.emiCount}>
                             <Text style={styles.emiCountText}>
-                              {loan.emis.filter(e => e.isPaid).length} / {loan.emis.length} EMIs paid
+                              {t('loansScreen.emiCount', {
+                                paid: loan.emis.filter(e => e.isPaid).length,
+                                total: loan.emis.length,
+                              })}
                             </Text>
                           </View>
                         </View>

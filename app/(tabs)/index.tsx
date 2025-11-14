@@ -1,5 +1,7 @@
-import { useAppSelector } from '@/store/hooks';
+import { useTranslation } from '@/locale/LocaleProvider';
+import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { LinearGradient } from 'expo-linear-gradient';
+import * as Notifications from 'expo-notifications';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import {
@@ -8,15 +10,99 @@ import {
   TrendingUp,
   Wallet
 } from 'lucide-react-native';
-import React from 'react';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useEffect, useMemo } from 'react';
+import { Image, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+
+import { recordSavingsUpdate } from '@/store/slices/savingsSlice';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const DashboardHome = () => {
   const router = useRouter();
+  const dispatch = useAppDispatch();
+  const t = useTranslation();
   const user = useAppSelector((state) => state.auth.user);
-  const { balance, totalIncome, totalExpense, transactions } = useAppSelector((state) => state.transactions);
+  const { totalIncome, totalExpense, transactions } = useAppSelector((state) => state.transactions);
+  const { totalSpent: activityTotalSpent } = useAppSelector((state) => state.activities);
   const { unreadCount } = useAppSelector((state) => state.notifications);
+  const savingsTargets = useAppSelector((state) => state.savings.targets);
+  const recentTransactions = useMemo(() => transactions.slice(0, 4), [transactions]);
+
+  const combinedExpense = totalExpense + activityTotalSpent;
+  const combinedBalance = totalIncome - combinedExpense;
+  useEffect(() => {
+    (async () => {
+      const settings = await Notifications.getPermissionsAsync();
+      if (settings.status !== 'granted') {
+        await Notifications.requestPermissionsAsync();
+      }
+      if (Platform.OS === 'android') {
+        await Notifications.setNotificationChannelAsync('savings-reminders', {
+          name: 'Savings Reminders',
+          importance: Notifications.AndroidImportance.DEFAULT,
+          sound: 'default',
+        });
+      }
+    })();
+  }, []);
+
+  useEffect(() => {
+    if (!savingsTargets.length) {
+      return;
+    }
+
+    const checkReminders = async () => {
+      const now = Date.now();
+      for (const target of savingsTargets) {
+        const reminderGapMs = target.reminderGapDays * 24 * 60 * 60 * 1000;
+        if (now - target.lastUpdated < reminderGapMs) {
+          continue;
+        }
+
+        const lastScheduledAt = target.lastReminderScheduledAt ?? target.lastUpdated;
+        if (now - lastScheduledAt < reminderGapMs) {
+          continue;
+        }
+
+        try {
+          const trigger: Notifications.TimeIntervalTriggerInput = {
+            type: Notifications.SchedulableTriggerInputTypes.TIME_INTERVAL,
+            seconds: 1,
+            repeats: false,
+            channelId: Platform.OS === 'android' ? 'savings-reminders' : undefined,
+          };
+
+          const notificationId = await Notifications.scheduleNotificationAsync({
+            content: {
+              title: 'Savings Reminder',
+              body: `It has been ${target.reminderGapDays === 1 ? 'a day' : `${target.reminderGapDays} days`} since you updated "${target.purpose}".`,
+              sound: 'default',
+            },
+            trigger,
+          });
+
+          dispatch(
+            recordSavingsUpdate({
+              id: target.id,
+              lastUpdated: target.lastUpdated,
+              notificationId,
+              reminderScheduledAt: now,
+            }),
+          );
+        } catch (error) {
+          console.warn('Failed to schedule overdue savings reminder', error);
+        }
+      }
+    };
+
+    checkReminders();
+  }, [dispatch, savingsTargets]);
+
+  const handleExpensePress = () => {
+    if (combinedExpense <= 0) {
+      return;
+    }
+    router.push('/(tabs)/expenseBreakdown');
+  };
 
   return (
     <View style={styles.container}>
@@ -38,33 +124,47 @@ const DashboardHome = () => {
             <View style={styles.header}>
               <View style={styles.headerContent}>
                 <View>
-                  <Text style={styles.greeting}>Welcome back,</Text>
-                  <Text style={styles.userName}>{user?.name || 'User'}</Text>
+                  <Text style={styles.greeting}>{t('dashboard.welcome')}</Text>
+                  <Text style={styles.userName}>{user?.name || t('dashboard.defaultUser')}</Text>
                 </View>
-                <TouchableOpacity 
-                  style={styles.notificationButton}
-                  onPress={() => router.push('/(tabs)/notifications')}
-                >
-                  <Bell size={22} color="#FFFFFF" />
-                  {unreadCount > 0 && (
-                    <View style={styles.notificationBadge}>
-                      <Text style={styles.notificationBadgeText}>
-                        {unreadCount > 9 ? '9+' : unreadCount}
-                      </Text>
-                    </View>
-                  )}
-                </TouchableOpacity>
+                <View style={styles.headerActions}>
+                  <TouchableOpacity 
+                    style={styles.jarButton}
+                    onPress={() => router.push('/(tabs)/savings')}
+                    activeOpacity={0.8}
+                  >
+                    <Image
+                      source={require('@/assets/images/piggy-bank.png')}
+                      style={styles.jarIcon}
+                      resizeMode="contain"
+                    />
+                    <Text style={styles.jarLabel}>{t('tabs.jar')}</Text>
+                  </TouchableOpacity>
+                  <TouchableOpacity 
+                    style={styles.notificationButton}
+                    onPress={() => router.push('/(tabs)/notifications')}
+                  >
+                    <Bell size={22} color="#FFFFFF" />
+                    {unreadCount > 0 && (
+                      <View style={styles.notificationBadge}>
+                        <Text style={styles.notificationBadgeText}>
+                          {unreadCount > 9 ? '9+' : unreadCount}
+                        </Text>
+                      </View>
+                    )}
+                  </TouchableOpacity>
+                </View>
               </View>
             </View>
 
             {/* Balance Card */}
             <View style={styles.balanceCard}>
               <View style={styles.balanceHeader}>
-                <Text style={styles.balanceLabel}>Total Balance</Text>
+                <Text style={styles.balanceLabel}>{t('dashboard.totalBalance')}</Text>
                 <Wallet size={20} color="rgba(255, 255, 255, 0.7)" />
               </View>
               <Text style={styles.balanceAmount}>
-                ₹{balance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                ₹{combinedBalance.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
               </Text>
               
               {/* Income/Expense Split */}
@@ -74,7 +174,7 @@ const DashboardHome = () => {
                     <TrendingUp size={16} color="#10B981" />
                   </View>
                   <View>
-                    <Text style={styles.balanceSplitLabel}>Income</Text>
+                    <Text style={styles.balanceSplitLabel}>{t('dashboard.income')}</Text>
                     <Text style={styles.balanceSplitAmount}>
                       ₹{totalIncome.toLocaleString('en-IN')}
                     </Text>
@@ -83,17 +183,23 @@ const DashboardHome = () => {
 
                 <View style={styles.balanceSplitDivider} />
 
-                <View style={styles.balanceSplitItem}>
+                <TouchableOpacity
+                  style={[styles.balanceSplitItem, styles.balanceSplitButton]}
+                  onPress={handleExpensePress}
+                  activeOpacity={combinedExpense > 0 ? 0.8 : 1}
+                  disabled={combinedExpense <= 0}
+                >
                   <View style={styles.balanceSplitIcon}>
                     <TrendingDown size={16} color="#EF4444" />
                   </View>
-                  <View>
-                    <Text style={styles.balanceSplitLabel}>Expense</Text>
+                  <View style={styles.balanceSplitContent}>
+                    <Text style={styles.balanceSplitLabel}>{t('dashboard.expense')}</Text>
                     <Text style={styles.balanceSplitAmount}>
-                      ₹{totalExpense.toLocaleString('en-IN')}
+                      ₹{combinedExpense.toLocaleString('en-IN')}
                     </Text>
+        
                   </View>
-                </View>
+                </TouchableOpacity>
               </View>
             </View>
 
@@ -103,20 +209,28 @@ const DashboardHome = () => {
                 <View style={styles.emptyIconContainer}>
                   <Wallet size={48} color="rgba(255, 255, 255, 0.3)" />
                 </View>
-                <Text style={styles.emptyStateTitle}>No Transactions Yet</Text>
+                <Text style={styles.emptyStateTitle}>{t('dashboard.emptyTitle')}</Text>
                 <Text style={styles.emptyStateDescription}>
-                  Start tracking your income and expenses by adding your first transaction
+                  {t('dashboard.emptyDescription')}
                 </Text>
               </View>
             ) : (
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
-                  <Text style={styles.sectionTitle}>Recent Transactions</Text>
-                  <Text style={styles.transactionCount}>{transactions.length}</Text>
+                  <View style={styles.sectionHeaderLeft}>
+                    <Text style={styles.sectionTitle}>{t('dashboard.recentTransactions')}</Text>
+                  </View>
+                  <TouchableOpacity
+                    style={styles.sectionActionButton}
+                    onPress={() => router.push('/(tabs)/transactions')}
+                    activeOpacity={0.8}
+                  >
+                    <Text style={styles.sectionActionText}>{t('dashboard.viewAllTransactions')}</Text>
+                  </TouchableOpacity>
                 </View>
                 
                 <View style={styles.transactionsList}>
-                  {transactions.slice(0, 10).map((transaction) => (
+                  {recentTransactions.map((transaction) => (
                     <View key={transaction.id} style={styles.transactionItem}>
                       <View style={[
                         styles.transactionIcon,
@@ -139,7 +253,7 @@ const DashboardHome = () => {
                         styles.transactionAmount,
                         { color: transaction.type === 'income' ? '#10B981' : '#EF4444' }
                       ]}>
-                        {transaction.type === 'income' ? '+' : '-'}₹{transaction.amount.toLocaleString('en-IN')}
+                        {transaction.type === 'income' ? '+ ' : '- '}₹{transaction.amount.toLocaleString('en-IN')}
                       </Text>
                     </View>
                   ))}
@@ -182,13 +296,18 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
+  headerActions: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 12,
+  },
   greeting: {
     fontSize: 16,
     color: 'rgba(255, 255, 255, 0.7)',
     marginBottom: 4,
   },
   userName: {
-    fontSize: 28,
+    fontSize: 22,
     fontWeight: '700',
     color: '#FFFFFF',
   },
@@ -215,6 +334,28 @@ const styles = StyleSheet.create({
     borderWidth: 2,
     borderColor: '#4C2F7C',
   },
+  jarButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    height: 40,
+    borderRadius: 12,
+    backgroundColor: 'rgba(16, 185, 129, 0.2)',
+    borderWidth: 1,
+    borderColor: 'rgba(16, 185, 129, 0.6)',
+  },
+  jarIcon: {
+    width: 20,
+    height: 20,
+    tintColor: 'rgba(16, 185, 129, 0.8)',
+  },
+  jarLabel: {
+    fontSize: 14,
+    fontWeight: '900',
+    color: 'rgba(16, 185, 129)',
+
+  },
   notificationBadgeText: {
     fontSize: 10,
     fontWeight: '700',
@@ -223,8 +364,9 @@ const styles = StyleSheet.create({
   balanceCard: {
     backgroundColor: 'rgba(124, 58, 237, 0.3)',
     borderRadius: 20,
-    padding: 24,
-    marginBottom: 20,
+    paddingHorizontal: 20,
+    paddingVertical: 18,
+    marginBottom: 16,
     borderWidth: 1,
     borderColor: 'rgba(124, 58, 237, 0.4)',
   },
@@ -232,7 +374,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 12,
+    marginBottom: 10,
   },
   balanceLabel: {
     fontSize: 14,
@@ -240,23 +382,29 @@ const styles = StyleSheet.create({
     fontWeight: '500',
   },
   balanceAmount: {
-    fontSize: 36,
+    fontSize: 24,
     fontWeight: '700',
     color: '#FFFFFF',
-    marginBottom: 16,
+    marginBottom: 10,
   },
   balanceSplit: {
     flexDirection: 'row',
     alignItems: 'center',
     backgroundColor: 'rgba(255, 255, 255, 0.08)',
     borderRadius: 12,
-    padding: 12,
+    padding: 10,
   },
   balanceSplitItem: {
     flex: 1,
     flexDirection: 'row',
     alignItems: 'center',
     gap: 10,
+  },
+  balanceSplitButton: {
+    flex: 1,
+  },
+  balanceSplitContent: {
+    flex: 1,
   },
   balanceSplitIcon: {
     width: 32,
@@ -276,6 +424,12 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     color: '#FFFFFF',
   },
+  balanceSplitSubtext: {
+    fontSize: 11,
+    color: 'rgba(255, 255, 255, 0.6)',
+    marginTop: 4,
+    fontWeight: '500',
+  },
   balanceSplitDivider: {
     width: 1,
     height: 40,
@@ -291,6 +445,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginBottom: 16,
   },
+  sectionHeaderLeft: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
   sectionTitle: {
     fontSize: 20,
     fontWeight: '700',
@@ -303,6 +462,21 @@ const styles = StyleSheet.create({
   },
   transactionsList: {
     gap: 12,
+  },
+  sectionActionButton: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 999,
+    backgroundColor: 'rgba(124, 58, 237, 0.18)',
+    borderWidth: 1,
+    borderColor: 'rgba(124, 58, 237, 0.35)',
+  },
+  sectionActionText: {
+    fontSize: 12,
+    fontWeight: '600',
+    color: '#C4B5FD',
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
   },
   transactionItem: {
     flexDirection: 'row',

@@ -5,12 +5,15 @@ import authReducer from './slices/authSlice';
 import transactionReducer from './slices/transactionSlice';
 import notificationReducer from './slices/notificationSlice';
 import loanReducer from './slices/loanSlice';
+import activityReducer from './slices/activitySlice';
+import settingsReducer from './slices/settingsSlice';
+import savingsReducer from './slices/savingsSlice';
 
 const persistConfig = {
   key: 'root',
   version: 1,
   storage: AsyncStorage,
-  whitelist: ['auth', 'transactions', 'notifications', 'loans'], // Persist all data
+  whitelist: ['auth', 'transactions', 'notifications', 'loans', 'activities', 'settings', 'savings'], // Persist all data
 };
 
 const rootReducer = combineReducers({
@@ -18,6 +21,9 @@ const rootReducer = combineReducers({
   transactions: transactionReducer,
   notifications: notificationReducer,
   loans: loanReducer,
+  activities: activityReducer,
+  settings: settingsReducer,
+  savings: savingsReducer,
 });
 
 const persistedReducer = persistReducer(persistConfig, rootReducer);

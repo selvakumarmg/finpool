@@ -1,10 +1,13 @@
 import { Tabs, useRouter, useSegments } from 'expo-router';
-import { BarChart3, FileText, Home, Plus, User } from 'lucide-react-native';
+import { CreditCard, FileText, Home, Plus, User } from 'lucide-react-native';
 import { Platform, TouchableOpacity, View } from 'react-native';
+
+import { useTranslation } from '@/locale/LocaleProvider';
 
 export default function TabsLayout() {
   const router = useRouter();
   const segments = useSegments();
+  const t = useTranslation();
   
   // Get the current active route
   const currentRoute = segments[1] || 'index';
@@ -13,6 +16,8 @@ export default function TabsLayout() {
     // Navigate based on current screen
     if (currentRoute === 'loans') {
       router.push('/(tabs)/addLoan');
+    } else if (currentRoute === 'activities') {
+      router.push('/(tabs)/addActivity');
     } else {
       // Default to add transaction for home and other screens
       router.push('/(tabs)/addTransaction');
@@ -56,7 +61,8 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="index"
         options={{
-          title: 'Home',
+          title: t('tabs.home'),
+          tabBarLabel: t('tabs.home'),
           tabBarIcon: ({ color, focused }) => (
             <View style={{
               alignItems: 'center',
@@ -74,13 +80,14 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="loans"
         options={{
-          title: 'Loans',
+          title: t('tabs.loans'),
+          tabBarLabel: t('tabs.loans'),
           tabBarIcon: ({ color, focused }) => (
             <View style={{
               alignItems: 'center',
               justifyContent: 'center',
             }}>
-              <BarChart3 
+              <CreditCard 
                 size={24} 
                 color={color}
               />
@@ -130,15 +137,23 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
+        name="transactions"
+        options={{
+          href: null,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
         name="add"
         options={{
           href: null, // Hide old add screen
         }}
       />
       <Tabs.Screen
-        name="reminder"
+        name="activities"
         options={{
-          title: 'Activity',
+          title: t('tabs.activities'),
+          tabBarLabel: t('tabs.activities'),
           tabBarIcon: ({ color, focused }) => (
             <View style={{
               alignItems: 'center',
@@ -155,7 +170,8 @@ export default function TabsLayout() {
       <Tabs.Screen
         name="profile"
         options={{
-          title: 'Profile',
+          title: t('tabs.profile'),
+          tabBarLabel: t('tabs.profile'),
           tabBarIcon: ({ color, focused }) => (
             <View style={{
               alignItems: 'center',
@@ -171,21 +187,65 @@ export default function TabsLayout() {
         }}
       />
       <Tabs.Screen
-        name="account"
+        name="editProfile"
         options={{
-          href: null, // Hide old account screen
-        }}
-      />
-      <Tabs.Screen
-        name="subscription"
-        options={{
-          href: null, // Hide old subscription screen
+          href: null,
+          tabBarStyle: { display: 'none' },
         }}
       />
       <Tabs.Screen
         name="addLoan"
         options={{
           href: null, // Hide from tab bar
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
+        name="addActivity"
+        options={{
+          href: null, // Hide from tab bar
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
+        name="addSavingsTarget"
+        options={{
+          href: null,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
+        name="savings"
+        options={{
+          href: null,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
+        name="activityDetail"
+        options={{
+          href: null, // Hide from tab bar
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
+        name="editActivity"
+        options={{
+          href: null, // Hide from tab bar
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
+        name="allActivities"
+        options={{
+          href: null, // Hide from tab bar
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
+        name="expenseBreakdown"
+        options={{
+          href: null,
           tabBarStyle: { display: 'none' },
         }}
       />
