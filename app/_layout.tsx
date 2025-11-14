@@ -9,12 +9,20 @@ import 'react-native-reanimated';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 
+import { configureGoogleSignIn } from '@/config/firebaseConfig';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { LocaleProvider } from '@/locale/LocaleProvider';
 import { persistor, store } from '@/store';
 import { useAppSelector } from '@/store/hooks';
 
 SplashScreen.preventAutoHideAsync().catch(() => {});
+
+// Initialize Google Sign-In configuration (only if native modules are available)
+try {
+  configureGoogleSignIn();
+} catch (error) {
+  console.warn('Firebase/Google Sign-In not available:', error);
+}
 
 function RootLayoutNav() {
   const colorScheme = useColorScheme();

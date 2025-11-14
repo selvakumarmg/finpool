@@ -1,11 +1,12 @@
 import GoogleIcon from '@/assets/icons/GoogleIcon';
+import { signInWithGoogle } from '@/config/firebaseConfig';
 import { useAppDispatch } from '@/store/hooks';
-import { mockLogin } from '@/store/slices/authSlice';
+import { loginFailure, loginStart, loginSuccess } from '@/store/slices/authSlice';
 import { LinearGradient } from 'expo-linear-gradient';
 import { Href, useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import React from 'react';
-import { Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import React, { useState } from 'react';
+import { Alert, Dimensions, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 const { width, height } = Dimensions.get('window');
@@ -13,12 +14,39 @@ const { width, height } = Dimensions.get('window');
 const Login = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
+  const [isLoading, setIsLoading] = useState(false);
 
-  const handleGetStarted = () => {
-    // Dispatch mock login action
-    dispatch(mockLogin());
-        // Navigate to tabs
-        router.replace('/(tabs)/' as Href);
+  const handleGetStarted = async () => {
+    try {
+      setIsLoading(true);
+      dispatch(loginStart());
+      
+      // Sign in with Google
+      const userData = await signInWithGoogle();
+      
+      // Dispatch success action with user data
+      dispatch(loginSuccess(userData));
+      
+      // Navigate to tabs
+      router.replace('/(tabs)/' as Href);
+    } catch (error: any) {
+      console.error('Login error:', error);
+      dispatch(loginFailure());
+      
+      // Show error message to user
+      let errorMessage = 'Failed to sign in with Google. Please try again.';
+      if (error.code === 'sign_in_cancelled') {
+        errorMessage = 'Sign in was cancelled.';
+      } else if (error.code === 'in_progress') {
+        errorMessage = 'Sign in is already in progress.';
+      } else if (error.code === 'play_services_not_available') {
+        errorMessage = 'Google Play Services is not available. Please update Google Play Services.';
+      }
+      
+      Alert.alert('Sign In Error', errorMessage);
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -56,13 +84,16 @@ const Login = () => {
           {/* Bottom Button */}
           <View style={styles.bottomContainer}>
             <TouchableOpacity 
-              style={styles.getStartedButton}
+              style={[styles.getStartedButton, isLoading && styles.getStartedButtonDisabled]}
               onPress={handleGetStarted}
               activeOpacity={0.8}
+              disabled={isLoading}
             >
               <View style={styles.getStartedContent}>
                 <GoogleIcon width={22} height={22} />
-                <Text style={styles.getStartedText}>Continue with Google</Text>
+                <Text style={styles.getStartedText}>
+                  {isLoading ? 'Signing in...' : 'Continue with Google'}
+                </Text>
               </View>
             </TouchableOpacity>
           </View>
@@ -93,21 +124,14 @@ const styles = StyleSheet.create({
     marginRight: 12,
   },
   logoCircle: {
-    borderRadius: 100,
+    width: 40,
+    height: 40,
+    borderRadius: 20,
     backgroundColor: 'rgba(255, 255, 255, 0.15)',
     justifyContent: 'center',
     alignItems: 'center',
     borderWidth: 2,
     borderColor: 'rgba(255, 255, 255, 0.3)',
-  },
-  logoImage:{
-    width: 32,
-    height: 32,
-    tintColor: 'rgba(255, 255, 255, 0.8)',
-    borderRadius: 10,
-    justifyContent: 'center',
-    alignItems: 'center',
-    margin: 10
   },
   logoInnerCircle: {
     width: 20,
@@ -154,9 +178,6 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 8,
   },
-  getStartedButtonDisabled: {
-    opacity: 0.6,
-  },
   getStartedContent: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -168,7 +189,14 @@ const styles = StyleSheet.create({
     fontWeight: '600',
     letterSpacing: 0.5,
   },
- 
+  getStartedButtonDisabled: {
+    opacity: 0.7,
+  },
+  logoImage: {
+    width: 20,
+    height: 20,
+    tintColor: '#FFFFFF',
+  },
 });
 
 export default Login;
