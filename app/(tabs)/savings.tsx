@@ -25,6 +25,7 @@ import { SupportedLanguage } from '@/config/appConfig';
 import { useLocale, useTranslation } from '@/locale/LocaleProvider';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { removeSavingsTarget, SavingsTarget } from '@/store/slices/savingsSlice';
+import { useResponsive } from '@/hooks/useResponsive';
 import ConfirmModal from '@/components/ui/ConfirmModal';
 import StatusModal, { StatusType } from '@/components/ui/StatusModal';
 
@@ -42,6 +43,7 @@ const SavingsList = () => {
   const dispatch = useAppDispatch();
   const { language } = useLocale();
   const t = useTranslation();
+  const { getFontSize, getSpacing } = useResponsive();
   const savingsTargets = useAppSelector((state) => state.savings.targets);
   const [confirmModal, setConfirmModal] = useState<{ visible: boolean; target?: SavingsTarget }>({
     visible: false,
@@ -158,7 +160,13 @@ const SavingsList = () => {
             >
               <ChevronLeft size={22} color="#FFFFFF" />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>{t('savings.title')}</Text>
+            <Text 
+              style={styles.headerTitle} 
+              numberOfLines={1} 
+              ellipsizeMode="tail"
+            >
+              {t('savings.title')}
+            </Text>
             <TouchableOpacity
               style={styles.headerButton}
               onPress={handleAdd}
@@ -210,7 +218,13 @@ const SavingsList = () => {
                   return (
                     <View key={target.id} style={styles.card}>
                       <View style={styles.cardHeader}>
-                        <Text style={styles.cardTitle}>{target.purpose}</Text>
+                        <Text 
+                          style={styles.cardTitle} 
+                          numberOfLines={2} 
+                          ellipsizeMode="tail"
+                        >
+                          {target.purpose}
+                        </Text>
                         <View style={styles.cardActions}>
                           <TouchableOpacity
                             style={styles.iconButton}
@@ -233,13 +247,19 @@ const SavingsList = () => {
                       <View style={styles.cardMeta}>
                         <View style={styles.metaRow}>
                           <CalendarDays size={16} color="#A78BFA" />
-                          <Text style={styles.metaText}>{targetDate}</Text>
+                          <Text style={styles.metaText} numberOfLines={1} ellipsizeMode="tail">
+                            {targetDate}
+                          </Text>
                         </View>
                         <View style={styles.metaRow}>
                           <Bell size={16} color="#FACC15" />
-                          <Text style={styles.metaText}>{reminderText}</Text>
+                          <Text style={styles.metaText} numberOfLines={1} ellipsizeMode="tail">
+                            {reminderText}
+                          </Text>
                         </View>
-                        <Text style={styles.updatedText}>{lastUpdated}</Text>
+                        <Text style={styles.updatedText} numberOfLines={1} ellipsizeMode="tail">
+                          {lastUpdated}
+                        </Text>
                       </View>
                     </View>
                   );
@@ -306,6 +326,10 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: '700',
     color: '#FFFFFF',
+    flex: 1,
+    textAlign: 'center',
+    marginHorizontal: 8,
+    minWidth: 0,
   },
   scrollView: {
     flex: 1,
@@ -394,6 +418,8 @@ const styles = StyleSheet.create({
     color: '#FFFFFF',
     flex: 1,
     paddingRight: 12,
+    minWidth: 0,
+    flexShrink: 1,
   },
   cardActions: {
     flexDirection: 'row',
@@ -434,9 +460,14 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flex: 1,
+    minWidth: 0,
   },
   metaText: {
     fontSize: 13,
+    flex: 1,
+    flexShrink: 1,
+    minWidth: 0,
     color: 'rgba(255, 255, 255, 0.7)',
     fontWeight: '500',
   },

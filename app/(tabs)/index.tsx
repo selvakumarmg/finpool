@@ -13,6 +13,7 @@ import {
 import React, { useEffect, useMemo } from 'react';
 import { Image, Platform, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
+import { useResponsive } from '@/hooks/useResponsive';
 import { recordSavingsUpdate } from '@/store/slices/savingsSlice';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
@@ -20,11 +21,13 @@ const DashboardHome = () => {
   const router = useRouter();
   const dispatch = useAppDispatch();
   const t = useTranslation();
+  const { getFontSize, getSpacing } = useResponsive();
   const user = useAppSelector((state) => state.auth.user);
   const { totalIncome, totalExpense, transactions } = useAppSelector((state) => state.transactions);
   const { totalSpent: activityTotalSpent } = useAppSelector((state) => state.activities);
   const { unreadCount } = useAppSelector((state) => state.notifications);
   const savingsTargets = useAppSelector((state) => state.savings.targets);
+  
   const recentTransactions = useMemo(() => transactions.slice(0, 4), [transactions]);
 
   const combinedExpense = totalExpense + activityTotalSpent;
@@ -123,9 +126,13 @@ const DashboardHome = () => {
             {/* Header */}
             <View style={styles.header}>
               <View style={styles.headerContent}>
-                <View>
-                  <Text style={styles.greeting}>{t('dashboard.welcome')}</Text>
-                  <Text style={styles.userName}>{user?.name || t('dashboard.defaultUser')}</Text>
+                <View style={{ flex: 1, marginRight: 12 }}>
+                  <Text style={styles.greeting} numberOfLines={1} ellipsizeMode="tail">
+                    {t('dashboard.welcome')}
+                  </Text>
+                  <Text style={styles.userName} numberOfLines={1} ellipsizeMode="tail">
+                    {user?.name || t('dashboard.defaultUser')}
+                  </Text>
                 </View>
                 <View style={styles.headerActions}>
                   <TouchableOpacity 
@@ -138,7 +145,9 @@ const DashboardHome = () => {
                       style={styles.jarIcon}
                       resizeMode="contain"
                     />
-                    <Text style={styles.jarLabel}>{t('tabs.jar')}</Text>
+                    <Text style={styles.jarLabel} numberOfLines={1} ellipsizeMode="tail">
+                      {t('tabs.jar')}
+                    </Text>
                   </TouchableOpacity>
                   <TouchableOpacity 
                     style={styles.notificationButton}
@@ -218,7 +227,9 @@ const DashboardHome = () => {
               <View style={styles.section}>
                 <View style={styles.sectionHeader}>
                   <View style={styles.sectionHeaderLeft}>
-                    <Text style={styles.sectionTitle}>{t('dashboard.recentTransactions')}</Text>
+                    <Text style={styles.sectionTitle} numberOfLines={1} ellipsizeMode="tail">
+                      {t('dashboard.recentTransactions')}
+                    </Text>
                   </View>
                   <TouchableOpacity
                     style={styles.sectionActionButton}
@@ -246,13 +257,26 @@ const DashboardHome = () => {
                         )}
                       </View>
                       <View style={styles.transactionDetails}>
-                        <Text style={styles.transactionName}>{transaction.description}</Text>
-                        <Text style={styles.transactionDate}>{transaction.date}</Text>
+                        <Text 
+                          style={styles.transactionName} 
+                          numberOfLines={1} 
+                          ellipsizeMode="tail"
+                        >
+                          {transaction.description}
+                        </Text>
+                        <Text style={styles.transactionDate} numberOfLines={1}>
+                          {transaction.date}
+                        </Text>
                       </View>
-                      <Text style={[
-                        styles.transactionAmount,
-                        { color: transaction.type === 'income' ? '#10B981' : '#EF4444' }
-                      ]}>
+                      <Text 
+                        style={[
+                          styles.transactionAmount,
+                          { color: transaction.type === 'income' ? '#10B981' : '#EF4444' }
+                        ]}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.7}
+                      >
                         {transaction.type === 'income' ? '+ ' : '- '}₹{transaction.amount.toLocaleString('en-IN')}
                       </Text>
                     </View>
@@ -344,6 +368,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(16, 185, 129, 0.2)',
     borderWidth: 1,
     borderColor: 'rgba(16, 185, 129, 0.6)',
+    flexShrink: 0,
   },
   jarIcon: {
     width: 20,
@@ -354,7 +379,7 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '900',
     color: 'rgba(16, 185, 129)',
-
+    flexShrink: 0,
   },
   notificationBadgeText: {
     fontSize: 10,
@@ -449,11 +474,15 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
+    flex: 1,
+    marginRight: 12,
+    minWidth: 0,
   },
   sectionTitle: {
     fontSize: 20,
     fontWeight: '700',
     color: '#FFFFFF',
+    flexShrink: 1,
   },
   transactionCount: {
     fontSize: 14,
@@ -470,6 +499,7 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(124, 58, 237, 0.18)',
     borderWidth: 1,
     borderColor: 'rgba(124, 58, 237, 0.35)',
+    flexShrink: 0,
   },
   sectionActionText: {
     fontSize: 12,
@@ -497,12 +527,15 @@ const styles = StyleSheet.create({
   },
   transactionDetails: {
     flex: 1,
+    marginRight: 8,
+    minWidth: 0,
   },
   transactionName: {
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
     marginBottom: 4,
+    flexShrink: 1,
   },
   transactionDate: {
     fontSize: 13,
@@ -511,6 +544,7 @@ const styles = StyleSheet.create({
   transactionAmount: {
     fontSize: 16,
     fontWeight: '700',
+    flexShrink: 0,
   },
   emptyState: {
     flex: 1,

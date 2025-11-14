@@ -2,7 +2,7 @@ import React, { useMemo, useState } from 'react';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { ChevronLeft, TrendingDown, TrendingUp } from 'lucide-react-native';
+import { ChevronLeft, Filter, TrendingDown, TrendingUp } from 'lucide-react-native';
 import {
   ScrollView,
   StyleSheet,
@@ -15,6 +15,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { SupportedLanguage } from '@/config/appConfig';
 import { useLocale, useTranslation } from '@/locale/LocaleProvider';
 import { useAppSelector } from '@/store/hooks';
+import { useResponsive } from '@/hooks/useResponsive';
 
 const LANGUAGE_LOCALE_MAP: Record<SupportedLanguage, string> = {
   en: 'en-IN',
@@ -32,10 +33,12 @@ const TransactionsScreen = () => {
   const router = useRouter();
   const t = useTranslation();
   const { language } = useLocale();
+  const { getFontSize, getSpacing } = useResponsive();
   const { transactions } = useAppSelector((state) => state.transactions);
 
   const [sortOrder, setSortOrder] = useState<SortOrder>('desc');
   const [filter, setFilter] = useState<TransactionFilter>('all');
+  const [showFilters, setShowFilters] = useState(false);
 
   const localeCode = LANGUAGE_LOCALE_MAP[language] ?? 'en-IN';
 
@@ -79,10 +82,28 @@ const TransactionsScreen = () => {
               <ChevronLeft size={22} color="#FFFFFF" />
             </TouchableOpacity>
             <View style={styles.headerTitles}>
-              <Text style={styles.headerTitle}>{t('transactionsScreen.title')}</Text>
-              <Text style={styles.headerSubtitle}>{t('transactionsScreen.subtitle')}</Text>
+              <Text 
+                style={styles.headerTitle} 
+                numberOfLines={1} 
+                ellipsizeMode="tail"
+              >
+                {t('transactionsScreen.title')}
+              </Text>
+              <Text 
+                style={styles.headerSubtitle} 
+                numberOfLines={1} 
+                ellipsizeMode="tail"
+              >
+                {t('transactionsScreen.subtitle')}
+              </Text>
             </View>
-            <View style={styles.headerButtonPlaceholder} />
+            <TouchableOpacity
+              style={styles.headerButton}
+              onPress={() => setShowFilters(!showFilters)}
+              activeOpacity={0.7}
+            >
+              <Filter size={22} color="#FFFFFF" />
+            </TouchableOpacity>
           </View>
 
           <ScrollView
@@ -90,7 +111,8 @@ const TransactionsScreen = () => {
             contentContainerStyle={styles.scrollContent}
             showsVerticalScrollIndicator={false}
           >
-            <View style={styles.filtersCard}>
+            {showFilters && (
+              <View style={styles.filtersCard}>
               <View style={styles.filterGroup}>
                 <Text style={styles.filterLabel}>{t('transactionsScreen.sortLabel')}</Text>
                 <View style={styles.chipRow}>
@@ -140,6 +162,7 @@ const TransactionsScreen = () => {
                 </View>
               </View>
             </View>
+            )}
 
             {filteredTransactions.length === 0 ? (
               <View style={styles.emptyState}>
@@ -168,11 +191,17 @@ const TransactionsScreen = () => {
                         )}
                       </View>
                       <View style={styles.transactionInfo}>
-                        <Text style={styles.transactionName}>{transaction.description}</Text>
-                        <Text style={styles.transactionMeta}>
+                        <Text 
+                          style={styles.transactionName} 
+                          numberOfLines={1} 
+                          ellipsizeMode="tail"
+                        >
+                          {transaction.description}
+                        </Text>
+                        <Text style={styles.transactionMeta} numberOfLines={1}>
                           {t('transactionsScreen.amountLabel')}: {formatAmount(transaction.amount)}
                         </Text>
-                        <Text style={styles.transactionMeta}>
+                        <Text style={styles.transactionMeta} numberOfLines={1}>
                           {t('transactionsScreen.dateLabel')}: {formatDate(transaction.date)}
                         </Text>
                       </View>
@@ -183,6 +212,9 @@ const TransactionsScreen = () => {
                             ? styles.incomeAmount
                             : styles.expenseAmount,
                         ]}
+                        numberOfLines={1}
+                        adjustsFontSizeToFit
+                        minimumFontScale={0.7}
                       >
                         {transaction.type === 'income' ? '+' : '-'}
                         {formatAmount(transaction.amount)}
@@ -234,16 +266,20 @@ const styles = StyleSheet.create({
   headerTitles: {
     flex: 1,
     alignItems: 'center',
+    minWidth: 0,
+    marginHorizontal: 8,
   },
   headerTitle: {
     fontSize: 22,
     fontWeight: '700',
     color: '#FFFFFF',
+    textAlign: 'center',
   },
   headerSubtitle: {
     marginTop: 4,
     fontSize: 13,
     color: 'rgba(255, 255, 255, 0.6)',
+    textAlign: 'center',
   },
   scrollView: {
     flex: 1,
@@ -279,7 +315,7 @@ const styles = StyleSheet.create({
   chip: {
     paddingHorizontal: 14,
     paddingVertical: 8,
-    borderRadius: 999,
+    borderRadius: 5,
     borderWidth: 1,
     borderColor: 'rgba(124, 58, 237, 0.35)',
     backgroundColor: 'rgba(124, 58, 237, 0.15)',
@@ -343,9 +379,12 @@ const styles = StyleSheet.create({
   },
   transactionInfo: {
     flex: 1,
+    marginRight: 8,
+    minWidth: 0,
     gap: 4,
   },
   transactionName: {
+    flexShrink: 1,
     fontSize: 16,
     fontWeight: '600',
     color: '#FFFFFF',
@@ -355,6 +394,7 @@ const styles = StyleSheet.create({
     color: 'rgba(255, 255, 255, 0.65)',
   },
   transactionAmount: {
+    flexShrink: 0,
     fontSize: 16,
     fontWeight: '700',
   },

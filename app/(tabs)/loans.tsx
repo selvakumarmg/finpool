@@ -6,10 +6,12 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { FileText, Calendar, DollarSign, TrendingDown, CheckCircle } from 'lucide-react-native';
 import { useAppSelector } from '@/store/hooks';
 import { useTranslation } from '@/locale/LocaleProvider';
+import { useResponsive } from '@/hooks/useResponsive';
 
 const Loans = () => {
   const { loans, totalLoanAmount, totalRemainingAmount } = useAppSelector((state) => state.loans);
   const t = useTranslation();
+  const { getFontSize, getSpacing } = useResponsive();
 
   return (
     <View style={styles.container}>
@@ -98,8 +100,20 @@ const Loans = () => {
                                 )}
                               </View>
                               <View style={styles.loanInfo}>
-                                <Text style={styles.loanName}>{loan.lenderName}</Text>
-                                <Text style={styles.loanType}>{t('loansScreen.loanTypeSuffix', { type: loan.loanType })}</Text>
+                                <Text 
+                                  style={styles.loanName} 
+                                  numberOfLines={1} 
+                                  ellipsizeMode="tail"
+                                >
+                                  {loan.lenderName}
+                                </Text>
+                                <Text 
+                                  style={styles.loanType} 
+                                  numberOfLines={1} 
+                                  ellipsizeMode="tail"
+                                >
+                                  {t('loansScreen.loanTypeSuffix', { type: loan.loanType })}
+                                </Text>
                               </View>
                             </View>
                             <View style={[
@@ -284,14 +298,18 @@ const styles = StyleSheet.create({
   },
   loanInfo: {
     flex: 1,
+    minWidth: 0,
+    marginRight: 8,
   },
   loanName: {
+    flexShrink: 1,
     fontSize: 18,
     fontWeight: '700',
     color: '#FFFFFF',
     marginBottom: 4,
   },
   loanType: {
+    flexShrink: 1,
     fontSize: 13,
     color: 'rgba(255, 255, 255, 0.6)',
   },

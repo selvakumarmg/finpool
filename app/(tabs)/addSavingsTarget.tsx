@@ -22,6 +22,7 @@ import { useLocale, useTranslation } from '@/locale/LocaleProvider';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { addNotification } from '@/store/slices/notificationSlice';
 import { addSavingsTarget, SavingsReminderGap, updateSavingsTarget } from '@/store/slices/savingsSlice';
+import { useResponsive } from '@/hooks/useResponsive';
 
 const LANGUAGE_LOCALE_MAP: Record<SupportedLanguage, string> = {
   en: 'en-IN',
@@ -44,6 +45,7 @@ const AddSavingsTarget = () => {
   const params = useLocalSearchParams<{ id?: string }>();
   const { language } = useLocale();
   const t = useTranslation();
+  const { getFontSize, getSpacing } = useResponsive();
   const localeCode = LANGUAGE_LOCALE_MAP[language] ?? 'en-IN';
   const targetId = typeof params.id === 'string' ? params.id : undefined;
   const existingTarget = useAppSelector((state) =>
@@ -377,7 +379,13 @@ const AddSavingsTarget = () => {
             <TouchableOpacity style={styles.backButton} onPress={() => router.back()}>
               <ChevronLeft size={24} color="#FFFFFF" />
             </TouchableOpacity>
-            <Text style={styles.headerTitle}>{headerTitle}</Text>
+            <Text 
+              style={styles.headerTitle} 
+              numberOfLines={1} 
+              ellipsizeMode="tail"
+            >
+              {headerTitle}
+            </Text>
             <TouchableOpacity
               style={[styles.saveButton, isScheduling && styles.saveButtonDisabled]}
               onPress={handleSave}
@@ -595,6 +603,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingTop: 20,
     paddingBottom: 16,
+    gap: 12,
   },
   backButton: {
     width: 40,
@@ -619,6 +628,10 @@ const styles = StyleSheet.create({
     fontSize: 24,
     fontWeight: '700',
     color: '#FFFFFF',
+    flex: 1,
+    textAlign: 'center',
+    marginHorizontal: 8,
+    minWidth: 0,
   },
   scrollView: {
     flex: 1,

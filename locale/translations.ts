@@ -234,11 +234,11 @@ const translations: Translations = {
         emptyTitle: 'No Transactions Yet',
         emptyDescription: 'Start tracking your income and expenses by adding your first transaction',
         recentTransactions: 'Recent Transactions',
-      viewAllTransactions: 'View All Transactions',
+      viewAllTransactions: 'View All',
       },
     transactionsScreen: {
       title: 'Transactions',
-      subtitle: 'Review every income and expense in one place',
+      subtitle: 'Review every income and expense here',
       emptyTitle: 'No Transactions Recorded',
       emptyDescription: 'Add an income or expense to see it listed here.',
       sortLabel: 'Sort',
@@ -250,6 +250,9 @@ const translations: Translations = {
       filterExpense: 'Expense',
       amountLabel: 'Amount',
       dateLabel: 'Date',
+      confirmDeleteTitle: 'Delete Transaction',
+      confirmDeleteMessage: 'Are you sure you want to delete this transaction? This action cannot be undone.',
+      deleteSuccess: 'Transaction deleted successfully',
     },
     tabs: {
       home: 'Home',

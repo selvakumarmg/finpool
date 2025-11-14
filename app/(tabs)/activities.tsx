@@ -1,6 +1,7 @@
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { deleteActivity } from '@/store/slices/activitySlice';
 import { useTranslation } from '@/locale/LocaleProvider';
+import { useResponsive } from '@/hooks/useResponsive';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -13,6 +14,7 @@ const Activities = () => {
   const router = useRouter();
   const t = useTranslation();
   const dispatch = useAppDispatch();
+  const { getFontSize, getSpacing } = useResponsive();
   const { activities, totalSpent } = useAppSelector((state) => state.activities);
   const [swipedActivityId, setSwipedActivityId] = useState<string | null>(null);
 
@@ -135,9 +137,21 @@ const Activities = () => {
                           <View style={styles.activityHeader}>
                             <View style={styles.activityTitleContainer}>
                               <View style={styles.activityInfo}>
-                                <Text style={styles.activityName}>{activity.name}</Text>
+                                <Text 
+                                  style={styles.activityName} 
+                                  numberOfLines={1} 
+                                  ellipsizeMode="tail"
+                                >
+                                  {activity.name}
+                                </Text>
                                 <View style={styles.activityMeta}>
-                                  <Text style={styles.activityCategory}>{activity.category}</Text>
+                                  <Text 
+                                    style={styles.activityCategory} 
+                                    numberOfLines={1} 
+                                    ellipsizeMode="tail"
+                                  >
+                                    {activity.category}
+                                  </Text>
                                   <View style={styles.metaDot} />
                                   <Text style={styles.activityDate}>{activity.date}</Text>
                                 </View>
@@ -283,15 +297,32 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     alignItems: 'center',
   },
-  activityTitleContainer: { flexDirection: 'row', alignItems: 'center', flex: 1 },
-  activityInfo: { flex: 1 },
-  activityName: { fontSize: 16, fontWeight: '600', color: '#FFFFFF', marginBottom: 4 },
+  activityTitleContainer: { 
+    flexDirection: 'row', 
+    alignItems: 'center', 
+    flex: 1,
+    minWidth: 0,
+    marginRight: 8,
+  },
+  activityInfo: { 
+    flex: 1,
+    minWidth: 0,
+  },
+  activityName: { 
+    fontSize: 16, 
+    fontWeight: '600', 
+    color: '#FFFFFF', 
+    marginBottom: 4,
+    flexShrink: 1,
+  },
   activityMeta: {
     flexDirection: 'row',
     alignItems: 'center',
     gap: 8,
   },
   activityCategory: {
+    flexShrink: 1,
+    minWidth: 0,
     fontSize: 12,
     fontWeight: '600',
     color: '#7C3AED',
