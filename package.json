@@ -20,7 +20,8 @@
     "build:prod:ios": "eas build --profile production --platform ios",
     "build:prod:all": "eas build --profile production --platform all",
     "clean": "cd android && gradlew clean && cd ..",
-    "release": "cd android && gradlew assembleRelease && cd .."
+    "release": "cd android && gradlew assembleRelease && cd ..",
+    "build": "cd android && gradlew bundleRelease && cd .."
   },
   "dependencies": {
     "@expo/vector-icons": "^15.0.3",
