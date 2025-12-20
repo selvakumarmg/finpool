@@ -23,7 +23,30 @@
     },
     "web": {
       "output": "static",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "bundler": "metro",
+      "name": "FinPool - Track Expenses & Savings",
+      "shortName": "FinPool",
+      "lang": "en",
+      "scope": "/",
+      "themeColor": "#7C3AED",
+      "backgroundColor": "#1a0b2e",
+      "description": "Track your expenses, manage loans, and achieve your savings goals with FinPool",
+      "dir": "auto",
+      "display": "standalone",
+      "orientation": "portrait",
+      "startUrl": "/",
+      "preferRelatedApplications": false,
+      "config": {
+        "firebase": {
+          "apiKey": "AIzaSyD2eJC9zxzAi-O3i9fZKYqYtKZpE2eStcE",
+          "authDomain": "finpool-e272b.firebaseapp.com",
+          "projectId": "finpool-e272b",
+          "storageBucket": "finpool-e272b.firebasestorage.app",
+          "messagingSenderId": "532732415001",
+          "appId": "1:532732415001:web:a50be96e7e613d36d36e88"
+        }
+      }
     },
     "plugins": [
       "expo-router",

@@ -1,23 +1,62 @@
 import { Platform } from 'react-native';
 
-// Lazy import Firebase modules to avoid crashes if native modules aren't available
+// Firebase Web SDK imports (for web platform)
+let firebaseApp: any = null;
+let firebaseAuth: any = null;
+let GoogleAuthProvider: any = null;
+let signInWithPopup: any = null;
+
+// React Native Firebase imports (for native platforms)
 let auth: any = null;
 let GoogleSignin: any = null;
 
-// Helper to safely import Firebase modules
+// Helper to safely import Firebase modules based on platform
 const getFirebaseModules = () => {
-  if (!auth || !GoogleSignin) {
-    try {
-      // Only import if native modules are available
-      require('@react-native-firebase/app');
-      auth = require('@react-native-firebase/auth').default;
-      GoogleSignin = require('@react-native-google-signin/google-signin').GoogleSignin;
-    } catch (error: any) {
-      console.warn('Firebase native modules not available. Make sure you have rebuilt the app after adding Firebase.');
-      throw new Error('Firebase native modules not found. Please rebuild the app with: npx expo run:android');
+  if (Platform.OS === 'web') {
+    // Web platform - use Firebase JS SDK
+    if (!firebaseApp || !firebaseAuth) {
+      try {
+        const firebase = require('firebase/app');
+        const authModule = require('firebase/auth');
+
+        // Initialize Firebase Web SDK if not already initialized
+        if (!firebase.getApps().length) {
+          firebaseApp = firebase.initializeApp({
+            apiKey: "AIzaSyD2eJC9zxzAi-O3i9fZKYqYtKZpE2eStcE",
+            authDomain: "finpool-e272b.firebaseapp.com",
+            projectId: "finpool-e272b",
+            storageBucket: "finpool-e272b.firebasestorage.app",
+            messagingSenderId: "532732415001",
+            appId: "1:532732415001:web:a50be96e7e613d36d36e88" // Using the Android app ID for web
+          });
+        } else {
+          firebaseApp = firebase.getApp();
+        }
+
+        firebaseAuth = authModule.getAuth(firebaseApp);
+        GoogleAuthProvider = authModule.GoogleAuthProvider;
+        signInWithPopup = authModule.signInWithPopup;
+      } catch (error: any) {
+        console.error('Firebase Web SDK initialization error:', error);
+        throw new Error('Firebase Web SDK not available');
+      }
     }
+    return { firebaseAuth, GoogleAuthProvider, signInWithPopup };
+  } else {
+    // Native platforms - use React Native Firebase
+    if (!auth || !GoogleSignin) {
+      try {
+        // Only import if native modules are available
+        require('@react-native-firebase/app');
+        auth = require('@react-native-firebase/auth').default;
+        GoogleSignin = require('@react-native-google-signin/google-signin').GoogleSignin;
+      } catch (error: any) {
+        console.warn('Firebase native modules not available. Make sure you have rebuilt the app after adding Firebase.');
+        throw new Error('Firebase native modules not found. Please rebuild the app with: npx expo run:android');
+      }
+    }
+    return { auth, GoogleSignin };
   }
-  return { auth, GoogleSignin };
 };
 
 // OAuth Client IDs from google-services.json
@@ -55,47 +94,68 @@ export const configureGoogleSignIn = () => {
  */
 export const signInWithGoogle = async () => {
   try {
-    const { auth: firebaseAuth, GoogleSignin: GSI } = getFirebaseModules();
-    
-    // Check if your device supports Google Play
-    await GSI.hasPlayServices({ showPlayServicesUpdateDialog: true });
-    
-    // Sign out first to clear any cached state (helps with DEVELOPER_ERROR)
-    try {
-      await GSI.signOut();
-    } catch (e) {
-      // Ignore sign out errors
+    if (Platform.OS === 'web') {
+      // Web platform - use Firebase JS SDK with popup
+      const { firebaseAuth, GoogleAuthProvider: GAP, signInWithPopup: signIn } = getFirebaseModules();
+
+      const provider = new GAP();
+      provider.addScope('profile');
+      provider.addScope('email');
+
+      const result = await signIn(firebaseAuth, provider);
+      const user = result.user;
+
+      // Return user data in the format expected by the auth slice
+      return {
+        id: user.uid,
+        email: user.email || '',
+        name: user.displayName || '',
+        avatar: user.photoURL || undefined,
+      };
+    } else {
+      // Native platforms - use React Native Firebase
+      const { auth: firebaseAuth, GoogleSignin: GSI } = getFirebaseModules();
+
+      // Check if your device supports Google Play
+      await GSI.hasPlayServices({ showPlayServicesUpdateDialog: true });
+
+      // Sign out first to clear any cached state (helps with DEVELOPER_ERROR)
+      try {
+        await GSI.signOut();
+      } catch (e) {
+        // Ignore sign out errors
+      }
+
+      // Sign in with Google - this opens the Google Sign-In dialog
+      const result = await GSI.signIn();
+
+      // Get the user's ID token after sign-in
+      // Note: getTokens() gets tokens for the currently signed-in user
+      const tokens = await GSI.getTokens();
+
+      if (!tokens.idToken) {
+        throw new Error('No ID token received from Google Sign-In');
+      }
+
+      // Create a Google credential with the token
+      const googleCredential = firebaseAuth.GoogleAuthProvider.credential(tokens.idToken);
+
+      // Sign in the user with the credential
+      const userCredential = await firebaseAuth().signInWithCredential(googleCredential);
+
+      const user = userCredential.user;
+
+      // Return user data in the format expected by the auth slice
+      return {
+        id: user.uid,
+        email: user.email || '',
+        name: user.displayName || '',
+        avatar: user.photoURL || undefined,
+      };
     }
-    
-    // Sign in with Google - this opens the Google Sign-In dialog
-    const result = await GSI.signIn();
-    
-    // Get the user's ID token after sign-in
-    // Note: getTokens() gets tokens for the currently signed-in user
-    const tokens = await GSI.getTokens();
-    
-    if (!tokens.idToken) {
-      throw new Error('No ID token received from Google Sign-In');
-    }
-    
-    // Create a Google credential with the token
-    const googleCredential = firebaseAuth.GoogleAuthProvider.credential(tokens.idToken);
-    
-    // Sign in the user with the credential
-    const userCredential = await firebaseAuth().signInWithCredential(googleCredential);
-    
-    const user = userCredential.user;
-    
-    // Return user data in the format expected by the auth slice
-    return {
-      id: user.uid,
-      email: user.email || '',
-      name: user.displayName || '',
-      avatar: user.photoURL || undefined,
-    };
   } catch (error: any) {
     console.error('Google Sign-In Error:', error);
-    
+
     // Check if it's a native module error
     if (error.message && error.message.includes('native module') || error.message && error.message.includes('not found')) {
       throw new Error(
@@ -104,8 +164,8 @@ export const signInWithGoogle = async () => {
         'Note: Firebase requires a development build, not Expo Go.'
       );
     }
-    
-    // Provide more helpful error messages
+
+    // Provide more helpful error messages for native
     if (error.code === '10') {
       throw new Error(
         'DEVELOPER_ERROR: Please verify the following:\n' +
@@ -115,7 +175,7 @@ export const signInWithGoogle = async () => {
         '4. Package name matches: dev.selvakumar.finpool'
       );
     }
-    
+
     throw error;
   }
 };
@@ -125,9 +185,15 @@ export const signInWithGoogle = async () => {
  */
 export const signOutFromGoogle = async () => {
   try {
-    const { auth: firebaseAuth, GoogleSignin: GSI } = getFirebaseModules();
-    await GSI.signOut();
-    await firebaseAuth().signOut();
+    if (Platform.OS === 'web') {
+      const { firebaseAuth } = getFirebaseModules();
+      const authModule = require('firebase/auth');
+      await authModule.signOut(firebaseAuth);
+    } else {
+      const { auth: firebaseAuth, GoogleSignin: GSI } = getFirebaseModules();
+      await GSI.signOut();
+      await firebaseAuth().signOut();
+    }
   } catch (error: any) {
     console.error('Sign Out Error:', error);
     throw error;

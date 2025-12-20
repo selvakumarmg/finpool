@@ -1,20 +1,17 @@
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, Linking, Animated, Easing, Modal } from 'react-native';
-import React, { useMemo, useState } from 'react';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { StatusBar } from 'expo-status-bar';
+import Constants from 'expo-constants';
 import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
-import { User, LogOut, ChevronLeft, Crown, ArrowRightCircle, Pencil } from 'lucide-react-native';
-import Constants from 'expo-constants';
-import Svg, { Circle } from 'react-native-svg';
+import { StatusBar } from 'expo-status-bar';
+import { ArrowRightCircle, ChevronLeft, Crown, LogOut, Pencil, User } from 'lucide-react-native';
+import React, { useMemo, useState } from 'react';
+import { Alert, Animated, Easing, Image, Linking, Modal, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
+import StatusModal, { StatusType } from '@/components/ui/StatusModal';
+import { useLocale, useTranslation } from '@/locale/LocaleProvider';
+import { languageOptions } from '@/locale/translations';
 import { useAppDispatch, useAppSelector } from '@/store/hooks';
 import { logout } from '@/store/slices/authSlice';
-import StatusModal, { StatusType } from '@/components/ui/StatusModal';
-import { useLocale } from '@/locale/LocaleProvider';
-import { languageOptions } from '@/locale/translations';
-import appConfig from '@/config/appConfig';
-import { useTranslation } from '@/locale/LocaleProvider';
 
 const Profile = () => {
   const router = useRouter();
@@ -78,7 +75,7 @@ const Profile = () => {
   return (
     <View style={styles.container}>
       <StatusBar style="light" />
-      
+
       <LinearGradient
         colors={['#6B46C1', '#4C2F7C', '#2D1B4E', '#1a0b2e']}
         locations={[0, 0.3, 0.6, 1]}
@@ -99,7 +96,7 @@ const Profile = () => {
             </TouchableOpacity>
           </View>
 
-          <ScrollView 
+          <ScrollView
             style={styles.scrollView}
             showsVerticalScrollIndicator={false}
             contentContainerStyle={styles.scrollContent}
@@ -155,13 +152,31 @@ const Profile = () => {
                 </TouchableOpacity>
               )}
 
-              <View style={[styles.optionRow,{borderBottomWidth: 0}]}>
+              <TouchableOpacity
+                style={styles.optionRow}
+                onPress={() => router.push('/(tabs)/privacyPolicy')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.optionLabel}>Privacy Policy</Text>
+                <Text style={styles.optionAction}>View</Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={styles.optionRow}
+                onPress={() => Linking.openURL('https://finpool.app/terms')}
+                activeOpacity={0.7}
+              >
+                <Text style={styles.optionLabel}>Terms & Conditions</Text>
+                <Text style={styles.optionAction}>View</Text>
+              </TouchableOpacity>
+
+              <View style={[styles.optionRow, { borderBottomWidth: 0 }]}>
                 <Text style={styles.optionLabel}>{t('profile.monthlyReport')}</Text>
                 <IOSSwitch value={monthlyReportEnabled} onValueChange={setMonthlyReportEnabled} />
               </View>
             </View>
 
-            
+
             {userPlan === 'free' && featureFlags.enablePremiumUpsell && (
               <View style={styles.premiumCard}>
                 <View style={styles.premiumHeader}>
@@ -177,12 +192,12 @@ const Profile = () => {
                   <Text style={styles.premiumPrice}>
                     {t('profile.premiumPrice', { amount: premiumPriceMonthly })}
                   </Text>
-                  
+
                 </View>
                 <TouchableOpacity style={styles.premiumButton} activeOpacity={0.8}>
-                    <ArrowRightCircle size={18} color="#FFFFFF" />
-                    <Text style={styles.premiumButtonText}>{t('profile.goPremium')}</Text>
-                  </TouchableOpacity>
+                  <ArrowRightCircle size={18} color="#FFFFFF" />
+                  <Text style={styles.premiumButtonText}>{t('profile.goPremium')}</Text>
+                </TouchableOpacity>
               </View>
             )}
 
@@ -511,6 +526,22 @@ const styles = StyleSheet.create({
     color: '#EF4444',
     marginLeft: 8,
   },
+  legalLinks: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginBottom: 12,
+    gap: 8,
+  },
+  legalLink: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.6)',
+    textDecorationLine: 'underline',
+  },
+  legalSeparator: {
+    fontSize: 13,
+    color: 'rgba(255, 255, 255, 0.4)',
+  },
   footerLink: {
     textAlign: 'center',
     fontSize: 13,
@@ -618,9 +649,9 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '700',
     color: '#FACC15',
-    marginVertical:15,
-    textAlign:'center',
-    alignContent:'center'
+    marginVertical: 15,
+    textAlign: 'center',
+    alignContent: 'center'
   },
   premiumButton: {
     flexDirection: 'row',
@@ -630,7 +661,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 18,
     paddingVertical: 10,
     borderRadius: 12,
-    justifyContent:'center'
+    justifyContent: 'center'
   },
   premiumButtonText: {
     fontSize: 14,

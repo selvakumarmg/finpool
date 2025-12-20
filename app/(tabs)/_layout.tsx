@@ -8,10 +8,10 @@ export default function TabsLayout() {
   const router = useRouter();
   const segments = useSegments();
   const t = useTranslation();
-  
+
   // Get the current active route
   const currentRoute = segments[1] || 'index';
-  
+
   const handleAddPress = () => {
     // Navigate based on current screen
     if (currentRoute === 'loans') {
@@ -23,7 +23,7 @@ export default function TabsLayout() {
       router.push('/(tabs)/addTransaction');
     }
   };
-  
+
   return (
     <Tabs
       screenOptions={{
@@ -68,8 +68,8 @@ export default function TabsLayout() {
               alignItems: 'center',
               justifyContent: 'center',
             }}>
-              <Home 
-                size={24} 
+              <Home
+                size={24}
                 color={color}
                 fill={focused ? color : 'none'}
               />
@@ -87,8 +87,8 @@ export default function TabsLayout() {
               alignItems: 'center',
               justifyContent: 'center',
             }}>
-              <CreditCard 
-                size={24} 
+              <CreditCard
+                size={24}
                 color={color}
               />
             </View>
@@ -244,6 +244,13 @@ export default function TabsLayout() {
       />
       <Tabs.Screen
         name="expenseBreakdown"
+        options={{
+          href: null,
+          tabBarStyle: { display: 'none' },
+        }}
+      />
+      <Tabs.Screen
+        name="privacyPolicy"
         options={{
           href: null,
           tabBarStyle: { display: 'none' },

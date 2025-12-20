@@ -15,7 +15,7 @@ import { LocaleProvider } from '@/locale/LocaleProvider';
 import { persistor, store } from '@/store';
 import { useAppSelector } from '@/store/hooks';
 
-SplashScreen.preventAutoHideAsync().catch(() => {});
+SplashScreen.preventAutoHideAsync().catch(() => { });
 
 // Initialize Google Sign-In configuration (only if native modules are available)
 try {
@@ -29,23 +29,39 @@ function RootLayoutNav() {
   const segments = useSegments();
   const router = useRouter();
   const isAuthenticated = useAppSelector((state) => state.auth.isAuthenticated);
+  const navigationReady = useRef(false);
 
   useEffect(() => {
-    const inAuthGroup = segments[0] === 'auth';
-    const inTabsGroup = segments[0] === '(tabs)';
+    // Wait a bit for the store to rehydrate
+    const timeout = setTimeout(() => {
+      navigationReady.current = true;
 
-    if (!isAuthenticated && !inAuthGroup) {
-      // Redirect to login if not authenticated
-      router.replace('/auth/login' as Href);
-    } else if (isAuthenticated && inAuthGroup) {
-      // Redirect to tabs if authenticated
-      router.replace('/(tabs)/' as Href);
-    }
+      const inAuthGroup = segments[0] === 'auth';
+
+      console.log('Navigation check:', {
+        isAuthenticated,
+        segments,
+        inAuthGroup
+      });
+
+      if (!isAuthenticated && !inAuthGroup) {
+        // Redirect to login if not authenticated
+        console.log('Redirecting to login...');
+        router.replace('/auth/login' as Href);
+      } else if (isAuthenticated && inAuthGroup) {
+        // Redirect to tabs if authenticated
+        console.log('Redirecting to home...');
+        router.replace('/(tabs)/' as Href);
+      }
+    }, 100); // Small delay to ensure store is rehydrated
+
+    return () => clearTimeout(timeout);
   }, [isAuthenticated, segments]);
 
   return (
     <ThemeProvider value={colorScheme === 'dark' ? DarkTheme : DefaultTheme}>
       <Stack>
+        <Stack.Screen name="index" options={{ headerShown: false }} />
         <Stack.Screen name="auth" options={{ headerShown: false }} />
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
       </Stack>
@@ -110,7 +126,7 @@ export default function RootLayout() {
 
   useEffect(() => {
     if (fontsLoaded || fontError) {
-      SplashScreen.hideAsync().catch(() => {});
+      SplashScreen.hideAsync().catch(() => { });
     }
   }, [fontsLoaded, fontError]);
 
@@ -122,7 +138,7 @@ export default function RootLayout() {
     <Provider store={store}>
       <PersistGate loading={null} persistor={persistor}>
         <LocaleProvider>
-        <RootLayoutNav />
+          <RootLayoutNav />
         </LocaleProvider>
       </PersistGate>
     </Provider>
