@@ -1,0 +1,59 @@
+{
+    "name": "FinPool - Track Expenses & Savings",
+    "short_name": "FinPool",
+    "description": "Track your expenses, manage loans, and achieve your savings goals with FinPool",
+    "start_url": "/",
+    "scope": "/",
+    "display": "standalone",
+    "orientation": "portrait",
+    "theme_color": "#7C3AED",
+    "background_color": "#1a0b2e",
+    "lang": "en",
+    "dir": "auto",
+    "prefer_related_applications": false,
+    "icons": [
+        {
+            "src": "/assets/images/favicon.png",
+            "sizes": "48x48",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/assets/images/app-logo.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/assets/images/app-logo.png",
+            "sizes": "192x192",
+            "type": "image/png",
+            "purpose": "maskable"
+        },
+        {
+            "src": "/assets/images/icon.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any"
+        },
+        {
+            "src": "/assets/images/icon.png",
+            "sizes": "1024x1024",
+            "type": "image/png",
+            "purpose": "any"
+        }
+    ],
+    "categories": [
+        "finance",
+        "productivity",
+        "utilities"
+    ],
+    "screenshots": [
+        {
+            "src": "/assets/images/splash-icon.png",
+            "sizes": "1284x2778",
+            "type": "image/png",
+            "label": "Splash Screen"
+        }
+    ]
+}
