@@ -22,7 +22,7 @@
       "package": "dev.selvakumar.finpool"
     },
     "web": {
-      "output": "server",
+      "output": "static",
       "favicon": "./assets/images/favicon.png",
       "bundler": "metro",
       "name": "FinPool - Track Expenses & Savings",
