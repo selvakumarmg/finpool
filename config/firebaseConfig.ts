@@ -72,18 +72,21 @@ const WEB_CLIENT_ID = '532732415001-nhitnvio18773mqv8nujfokpu5gdukf7.apps.google
  * Call this once at app startup (e.g., in _layout.tsx or App.tsx)
  */
 export const configureGoogleSignIn = () => {
+  // Only configure for native platforms
+  if (Platform.OS === 'web') return;
+
   try {
     const { GoogleSignin: GSI } = getFirebaseModules();
-    GSI.configure({
-      webClientId: WEB_CLIENT_ID, // Web client ID from Firebase Console (required for Firebase Auth)
-      // For Android, we don't need to set iosClientId
-      ...(Platform.OS === 'ios' && { iosClientId: '' }), // Add if needed for iOS
-      offlineAccess: true, // If you want to access Google API on behalf of the user FROM YOUR SERVER
-      forceCodeForRefreshToken: true, // [Android] related to `serverAuthCode`, read the docs link below *.
-      scopes: ['profile', 'email'], // Optional: specify scopes if needed
-    });
+    if (GSI) {
+      GSI.configure({
+        webClientId: WEB_CLIENT_ID,
+        ...(Platform.OS === 'ios' && { iosClientId: '' }),
+        offlineAccess: true,
+        forceCodeForRefreshToken: true,
+        scopes: ['profile', 'email'],
+      });
+    }
   } catch (error) {
-    // Silently fail if native modules aren't available
     console.warn('Could not configure Google Sign-In:', error);
   }
 };

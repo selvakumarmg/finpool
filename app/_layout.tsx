@@ -9,6 +9,13 @@ import 'react-native-reanimated';
 import { Provider } from 'react-redux';
 import { PersistGate } from 'redux-persist/integration/react';
 
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+} from '@expo-google-fonts/inter';
+
 import { configureGoogleSignIn } from '@/config/firebaseConfig';
 import { useColorScheme } from '@/hooks/use-color-scheme';
 import { LocaleProvider } from '@/locale/LocaleProvider';
@@ -71,18 +78,10 @@ function RootLayoutNav() {
 }
 
 const interFontSources = {
-  Inter_400Regular: {
-    uri: 'https://github.com/google/fonts/raw/main/ofl/inter/Inter-Regular.ttf',
-  },
-  Inter_500Medium: {
-    uri: 'https://github.com/google/fonts/raw/main/ofl/inter/Inter-Medium.ttf',
-  },
-  Inter_600SemiBold: {
-    uri: 'https://github.com/google/fonts/raw/main/ofl/inter/Inter-SemiBold.ttf',
-  },
-  Inter_700Bold: {
-    uri: 'https://github.com/google/fonts/raw/main/ofl/inter/Inter-Bold.ttf',
-  },
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
 };
 
 export default function RootLayout() {

@@ -29,6 +29,7 @@
     "android:build:bundle": "cd android && gradlew bundleRelease"
   },
   "dependencies": {
+    "@expo-google-fonts/inter": "^0.4.2",
     "@expo/vector-icons": "^15.0.3",
     "@react-native-async-storage/async-storage": "^1.24.0",
     "@react-native-firebase/app": "^23.5.0",
