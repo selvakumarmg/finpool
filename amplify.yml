@@ -3,10 +3,10 @@ frontend:
   phases:
     preBuild:
       commands:
-        - npm ci
+        - npm install --legacy-peer-deps
     build:
       commands:
-        - npm run build:web:prod
+        - npx expo export --platform web
   artifacts:
     baseDirectory: dist
     files:

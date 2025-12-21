@@ -37,6 +37,37 @@
       "orientation": "portrait",
       "startUrl": "/",
       "preferRelatedApplications": false,
+      "categories": [
+        "finance",
+        "productivity",
+        "utilities"
+      ],
+      "icons": [
+        {
+          "src": "./assets/images/icon.png",
+          "sizes": "1024x1024",
+          "type": "image/png",
+          "purpose": "any"
+        },
+        {
+          "src": "./assets/images/app-logo.png",
+          "sizes": "512x512",
+          "type": "image/png",
+          "purpose": "any maskable"
+        },
+        {
+          "src": "./assets/images/favicon.png",
+          "sizes": "48x48",
+          "type": "image/png",
+          "purpose": "any"
+        }
+      ],
+      "screenshots": [],
+      "serviceWorker": {
+        "enabled": true
+      },
+      "offline": true,
+      "crossOriginIsolated": false,
       "config": {
         "firebase": {
           "apiKey": "AIzaSyD2eJC9zxzAi-O3i9fZKYqYtKZpE2eStcE",
